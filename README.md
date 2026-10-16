@@ -3,11 +3,14 @@
 Ride a relativistic rocket in a terminal and watch your clock fall behind Earth's. A C11 special-relativity toy: exact hyperbolic motion at constant proper acceleration, Lorentz boosts, and a live spacetime diagram.
 (C言語の特殊相対論シミュレータ。ロケットを加減速させ、時空図と固有時を観察します。)
 
+![demo](docs/demo.gif)
+
 ## Run
 
 ```sh
 make && ./relativity-rider          # interactive
 ./relativity-rider --snapshot       # one frame, no terminal needed
+./relativity-rider --gif docs/demo.gif  # scripted flip-and-burn trip as an animated GIF
 make test && make plots             # unit tests and docs/*.svg
 docker build -t relativity-rider .  # same, reproducibly
 ```
