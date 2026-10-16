@@ -7,6 +7,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "gif.h"
 #include "relativity.h"
 #include "render.h"
 #include "svg.h"
@@ -65,6 +66,42 @@ static int snapshot(void)
     return 0;
 }
 
+static int gif_colour(char c)
+{
+    if (c == '#') return 2;
+    if (c == '@') return 3;
+    if (c == '.') return 4;
+    if (c == '/' || c == '\\') return 5;
+    return 1;
+}
+
+/* Scripted 1 g flip-and-burn trip to the star as an animated GIF. */
+static int gif_demo(const char *path)
+{
+    double a = ONE_G, half_tau = acosh(1.0 + a * DEST / 2.0) / a;
+    enum { FRAMES = 100 };
+    unsigned char pal[GIF_COLOURS][3] = {{8, 10, 24}, {235, 235, 235}, {255, 205, 60}, {255, 120, 90},
+                                         {95, 110, 150}, {110, 120, 175}};
+    const int scale = 3, cw = RENDER_COLS * 6 * scale, ch = RENDER_ROWS * 9 * scale;
+    static unsigned char px[RENDER_COLS * 6 * 3 * RENDER_ROWS * 9 * 3];
+    static char buf[RENDER_COLS * RENDER_ROWS * 4];
+    static Rocket trail[TRAIL];
+    Rocket r = {0, 0, 0, 0};
+    int tlen = 0;
+    Gif *g = gif_open(path, cw, ch, pal, 6);
+    if (!g) return 1;
+    for (int k = 0; k <= FRAMES; k++) {
+        if (tlen < TRAIL) trail[tlen++] = r;
+        render_frame(&r, trail, tlen, DEST, buf, sizeof buf);
+        gif_draw_text(px, cw, ch, buf, scale, gif_colour);
+        if (gif_frame(g, px, k == FRAMES ? 250 : 0)) return 1;
+        if (k < FRAMES) rocket_step(&r, k < FRAMES / 2 ? a : -a, 2.0 * half_tau / FRAMES);
+    }
+    if (gif_close(g)) return 1;
+    printf("arrived at %.3f ly: %.2f yr on board, %.2f yr on Earth\n", r.x, r.tau, r.t);
+    return 0;
+}
+
 static struct termios saved;
 static void restore(void) { tcsetattr(STDIN_FILENO, TCSANOW, &saved); fputs("\033[?25h", stdout); }
 
@@ -120,5 +157,6 @@ int main(int argc, char **argv)
 {
     if (argc > 1 && strcmp(argv[1], "--headless") == 0) return headless(argc > 2 ? argv[2] : ".");
     if (argc > 1 && strcmp(argv[1], "--snapshot") == 0) return snapshot();
+    if (argc > 1 && strcmp(argv[1], "--gif") == 0) return gif_demo(argc > 2 ? argv[2] : "demo.gif");
     return play();
 }
