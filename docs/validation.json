@@ -1,0 +1,35 @@
+{
+  "checks": 36,
+  "seconds": 12.506976994,
+  "equivalence": {
+    "rows": 38,
+    "columns": 19,
+    "maxError": 1.7763568394002505e-15,
+    "tolerance": 1e-9
+  },
+  "errors": 0,
+  "externalRequests": 0,
+  "handTrip": {
+    "tau": 3.813221816331812,
+    "t": 6.1477245221073975,
+    "x": 4.249997127542919,
+    "v": -0.03638983323703984,
+    "trims": 7
+  },
+  "demo": {
+    "x": 4.199999999999933,
+    "v": -8.153200337090993e-17,
+    "tau": 3.526679136491849,
+    "t": 5.823601879849197,
+    "gap": 2.296922743357348,
+    "maxV": 0.948867871787375
+  },
+  "screenshots": [
+    "arrived.jpg",
+    "before-terminal.jpg",
+    "burning.jpg",
+    "demo-flip.jpg",
+    "mobile.jpg",
+    "observatory.jpg"
+  ]
+}

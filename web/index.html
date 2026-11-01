@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#11142a">
+  <title>Relativity Rider — a spacetime observatory</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="./" aria-label="Relativity Rider home"><span class="brandmark" aria-hidden="true">γ</span> RELATIVITY <strong>RIDER</strong></a>
+  <span class="eyebrow">A SPACETIME OBSERVATORY</span>
+  <a class="about-link" href="#field-notes">How it works <span aria-hidden="true">↘</span></a>
+</header>
+<main>
+  <section class="intro">
+    <div><p class="eyebrow">01 / THE TRIP</p><h1>Fly to a star 4.2 ly away.<br><em>Stop there, younger than your twin.</em></h1></div>
+    <div class="crew" aria-label="The two clocks">
+      <figure class="clockcard rider">
+        <img id="rider-portrait" src="art/rider-portrait.png" alt="Vela, a fox pilot in a round space helmet" width="88" height="88">
+        <figcaption><strong>Vela</strong> rides the rocket<span>ship clock τ</span><b id="age-rider">0.00 yr</b></figcaption>
+      </figure>
+      <figure class="clockcard twin">
+        <img id="twin-portrait" src="art/twin-portrait.png" alt="Oren, Vela's twin, a fox with round glasses and a knitted sweater who stays on Earth" width="88" height="88">
+        <figcaption><strong>Oren</strong> stays on Earth<span>Earth clock t</span><b id="age-twin">0.00 yr</b></figcaption>
+      </figure>
+    </div>
+  </section>
+  <div class="layout">
+    <section class="panel" aria-label="Spacetime diagram">
+      <div class="view-heading"><span><i class="live-dot" aria-hidden="true"></i> <span id="mode-name">MANUAL FLIGHT</span></span><span id="clock">τ = 0.00 yr</span></div>
+      <div class="scene">
+        <canvas id="scene" width="1080" height="520" role="img" aria-label="Spacetime diagram in the Earth frame: position in light-years across, Earth time in years upwards, with the light cone, the star's worldline and the rocket's computed worldline."></canvas>
+        <div class="scene-label"><span id="status" role="status">Loading the rocket model…</span><small>Painted sky is decoration · lines are the computed worldline</small></div>
+        <div id="goal" hidden>Arrived at rest on the star</div>
+      </div>
+      <div class="legend" aria-label="Legend">
+        <span><i class="key world"></i> rocket worldline (computed)</span>
+        <span><i class="key cone"></i> light from Earth at t = 0 (v = c)</span>
+        <span><i class="key star"></i> the star at x = 4.2 ly</span>
+        <span><i class="key now"></i> rocket's “now” (equal ship time)</span>
+        <span><i class="key earth"></i> Earth</span>
+      </div>
+      <div class="telemetry" aria-label="Rocket readouts">
+        <div><span>SPEED v / c</span><strong id="v">—</strong></div>
+        <div><span>LORENTZ γ</span><strong id="gamma">—</strong></div>
+        <div><span>POSITION x</span><strong id="x">—</strong><small>ly</small></div>
+        <div><span>TWIN GAP t − τ</span><strong id="gap">—</strong><small>yr</small></div>
+      </div>
+    </section>
+    <aside class="control-panel" aria-label="Rocket controls">
+      <p class="eyebrow">YOUR ENGINE</p><h2>Burn. Flip.<br>Burn back.</h2>
+      <p class="control-note">Hold a button (or <kbd>W</kbd> / <kbd>S</kbd>) for a constant proper acceleration of about 1 g. Release to coast. Arrive within 0.05 ly of the star, slower than 0.05 c.</p>
+      <div class="thrust">
+        <button id="accel" class="burn" disabled aria-label="Accelerate toward the star">Accelerate <kbd>W</kbd></button>
+        <button id="decel" class="burn" disabled aria-label="Decelerate">Decelerate <kbd>S</kbd></button>
+      </div>
+      <div id="engine" class="engine-state" aria-live="polite">Engine off · coasting</div>
+      <div class="secondary-actions"><button id="pause" disabled>Pause</button><button id="reset" disabled>Back to Earth</button><span><kbd>P</kbd> · <kbd>R</kbd></span></div>
+      <div class="experiment"><p class="eyebrow">OR WATCH AN EXPERIMENT</p>
+        <button id="demo" disabled>1 g flip-and-burn trip <span aria-hidden="true">→</span></button>
+        <p id="experiment-note">Your engine, your trip. Burn toward the star, flip half way and burn back to stop on it.</p></div>
+    </aside>
+  </div>
+  <section class="analysis" aria-label="The two clocks over the trip">
+    <div class="chart-panel"><div class="chart-heading"><h2>Two clocks</h2><span><i class="line-key earth"></i> Earth time t · <i class="line-key ship"></i> ship time τ</span></div>
+      <canvas id="plot" width="1080" height="230" role="img" aria-label="Earth time and ship time in years against the number of engine steps"></canvas>
+      <p id="plot-note">Horizontal axis: ship time τ in years. While the rocket is at rest the two lines run together; at speed Earth's clock pulls ahead by the factor γ.</p></div>
+  </section>
+  <section id="field-notes" class="field-notes"><p class="eyebrow">FIELD NOTES</p>
+    <div><h2>Same distance, less time on board.</h2><p>At a constant 1 g the rocket reaches the half-way point at 0.95 c. The full flip-and-burn trip takes 3.53 years on Vela's clock and 5.82 years on Oren's. The worldline never leaves the light cone: nothing here goes faster than light.</p></div>
+    <div><h3>The same model as the terminal game</h3><p>Each step advances the ship clock by 0.0044 yr with the exact closed form of hyperbolic motion (units c = 1, years and light-years), in C compiled to WebAssembly. JavaScript only draws and reads inputs. The paintings and the two foxes are illustrations; their markers sit on computed events.</p></div>
+  </section>
+</main>
+<footer><span>RELATIVITY RIDER <span class="muted">/ C11 special relativity</span></span><span>Every clock is right. They just disagree.</span></footer>
+<noscript>This observatory needs JavaScript and WebAssembly. The terminal version remains available from the repository.</noscript>
+<script type="module" src="app.mjs"></script>
+</body>
+</html>
