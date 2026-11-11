@@ -28,7 +28,7 @@ function reset(mode = 0, run = false) {
 }
 function setThrust(sign) {
   if (!engine || state.mode !== 0) return;
-  held = sign; engine._rr_thrust(sign);
+  held = sign; engine._rr_thrust(sign); if (sign) burned = true;
   if (sign && paused && !state.done) { paused = false; accumulator = 0; }
   pull(); render();
 }
@@ -63,6 +63,10 @@ const stop = () => { if (held) setThrust(0); paused = true; accumulator = 0; if 
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
 window.addEventListener('blur', stop);
 
+// On a phone (narrow, short or touch-first screen) every canvas label is at least 14 CSS px.
+const phone = matchMedia('(max-width:720px),(max-height:500px),(pointer:coarse)');
+const textPx = desktop => phone.matches ? Math.max(14, desktop) : desktop;
+let canvasTexts = [];
 function canvasSize(canvas) {
   const bounds = canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
   const w = Math.round(bounds.width * dpr), h = Math.round(bounds.height * dpr);
@@ -90,20 +94,21 @@ function drawScene() {
   if (sky.complete && sky.naturalWidth) cover(ctx, sky, w, h);
   else { ctx.fillStyle = '#141838'; ctx.fillRect(0, 0, w, h); }
   ctx.fillStyle = '#0a0d20b0'; ctx.fillRect(0, 0, w, h);
-  const narrow = w < 560, left = narrow ? 34 : 54, right = narrow ? 14 : 26, top = narrow ? 112 : 104, base = h - (narrow ? 40 : 44);
+  const narrow = w < 560, big = phone.matches, left = big ? 40 : narrow ? 34 : 54, right = narrow ? 14 : 26, top = narrow ? 112 : 104, base = h - (big ? 52 : narrow ? 40 : 44);
+  const axis = textPx(10), mark = textPx(11); canvasTexts = [{text: 'axis labels', px: axis}, {text: 'clock labels', px: mark}];
   const xMin = Math.min(-0.6, state.x - 0.6), xMax = Math.max(5.2, state.x + 0.6), tMax = Math.max(7, Math.ceil(state.t + 0.8));
   const X = x => left + (x - xMin) / (xMax - xMin) * (w - left - right);
   const Y = t => base - t / tMax * (base - top);
   // Grid, axes and units.
-  ctx.font = '10px system-ui'; ctx.lineWidth = 1; ctx.strokeStyle = '#ffffff1c';
+  ctx.font = `${axis}px system-ui`; ctx.lineWidth = 1; ctx.strokeStyle = '#ffffff1c';
   const xStep = xMax - xMin > 9 ? 2 : 1, tStep = tMax > 14 ? 2 : 1;
   for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax; x += xStep) line(ctx, X(x), top, X(x), base);
   for (let t = 0; t <= tMax; t += tStep) line(ctx, left, Y(t), w - right, Y(t));
   ctx.strokeStyle = '#ffffff66'; line(ctx, left, base, w - right, base); line(ctx, left, base, left, top);
   ctx.fillStyle = C.ink; ctx.textAlign = 'center';
-  for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax; x += xStep) ctx.fillText(String(x), X(x), base + 14);
-  ctx.textAlign = 'right'; ctx.fillText('position x [ly], Earth frame', w - right, base + 30);
-  for (let t = 0; t <= tMax; t += tStep) ctx.fillText(String(t), left - 6, Y(t) + 3);
+  for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax; x += xStep) ctx.fillText(String(x), X(x), base + axis + 4);
+  ctx.textAlign = 'right'; ctx.fillText('position x [ly], Earth frame', w - right, base + 2 * axis + 10);
+  for (let t = 0; t <= tMax; t += tStep) ctx.fillText(String(t), left - 6, Y(t) + axis / 3);
   ctx.textAlign = 'left'; ctx.fillText('Earth time t [yr]', left + 4, top - 8);
   // Light cone of the departure event: light leaves Earth at t = 0 along x = t (and x = -t).
   ctx.strokeStyle = C.cone; ctx.setLineDash([7, 5]); ctx.lineWidth = 1.5;
@@ -138,25 +143,26 @@ function drawScene() {
   const size = narrow ? 17 : Math.max(20, Math.min(30, w * 0.026));
   portrait(ctx, twin, X(0), Y(state.t), size * 0.8, C.earth);
   portrait(ctx, rider, X(state.x), Y(state.t), size, C.world);
-  ctx.textAlign = 'left'; ctx.font = '600 11px system-ui'; ctx.fillStyle = '#ffe2a8';
+  ctx.textAlign = 'left'; ctx.font = `600 ${mark}px system-ui`; ctx.fillStyle = '#ffe2a8';
   const labelX = Math.min(X(state.x) + size + 6, w - right - 120);
   ctx.fillText(`τ = ${state.tau.toFixed(2)} yr`, labelX, Y(state.t) - 4);
-  ctx.fillStyle = '#b9e8d6'; ctx.fillText(`t = ${state.t.toFixed(2)} yr`, labelX, Y(state.t) + 11);
+  ctx.fillStyle = '#b9e8d6'; ctx.fillText(`t = ${state.t.toFixed(2)} yr`, labelX, Y(state.t) + mark);
 }
 
 function drawPlot() {
-  const {ctx, w, h} = canvasSize(plot), left = 44, right = 14, top = 20, bottom = 30;
+  const small = textPx(9), {ctx, w, h} = canvasSize(plot), left = 44, right = 14, top = small + 11, bottom = small + 21;
+  canvasTexts = canvasTexts.filter(row => row.text !== 'chart labels').concat({text: 'chart labels', px: small});
   const last = samples[samples.length - 1] || {tau: 0, t: 0};
   const tauMax = Math.max(4, Math.ceil(last.tau + 0.2)), yMax = Math.max(7, Math.ceil(last.t + 0.5));
   const X = tau => left + tau / tauMax * (w - left - right), Y = y => top + (1 - y / yMax) * (h - top - bottom);
-  ctx.clearRect(0, 0, w, h); ctx.font = '9px system-ui'; ctx.lineWidth = 1; ctx.textAlign = 'right';
+  ctx.clearRect(0, 0, w, h); ctx.font = `${small}px system-ui`; ctx.lineWidth = 1; ctx.textAlign = 'right';
   const yStep = yMax > 14 ? 2 : 1;
   for (let y = 0; y <= yMax; y += yStep) {
     ctx.strokeStyle = '#2f3866'; line(ctx, left, Y(y), w - right, Y(y));
-    ctx.fillStyle = '#aab3c9'; ctx.fillText(String(y), left - 8, Y(y) + 3);
+    ctx.fillStyle = '#aab3c9'; ctx.fillText(String(y), left - 8, Y(y) + small / 3);
   }
   ctx.textAlign = 'center';
-  for (let tau = 0; tau <= tauMax; tau += tauMax > 10 ? 2 : 1) ctx.fillText(String(tau), X(tau), h - bottom + 14);
+  for (let tau = 0; tau <= tauMax; tau += tauMax > 10 ? 2 : 1) ctx.fillText(String(tau), X(tau), h - bottom + small + 4);
   ctx.textAlign = 'left'; ctx.fillText('years', 4, top - 7); ctx.textAlign = 'right'; ctx.fillText('ship time τ [yr]', w - right, h - 2);
   for (const [key, colour] of [['t', C.earth], ['tau', C.world]]) {
     ctx.strokeStyle = colour; ctx.lineWidth = 2; ctx.beginPath();
@@ -210,6 +216,21 @@ function frame(timestamp) {
   }
   requestAnimationFrame(frame);
 }
+// Read-only hook for the phone playability check: sizes in CSS px of the scene canvas, the first goal, the next tap.
+let burned = false;
+const fromScene = el => { const c = scene.getBoundingClientRect(), r = el.getBoundingClientRect(); return {x: r.left + r.width / 2 - c.left, y: r.top + r.height / 2 - c.top, hold: true}; };
+window.__tmGate = {
+  version: 1,
+  get logical() { const r = scene.getBoundingClientRect(); return {w: r.width || 1, h: r.height || 1}; },
+  scene: () => !engine ? 'loading' : state.done ? 'done' : paused ? 'paused' : 'play',
+  goal: () => burned,
+  objective: () => $('control-goal').textContent,
+  texts: () => canvasTexts.map(row => ({...row})),
+  targets: () => [],
+  player: () => null,
+  hint: () => !engine || state.mode !== 0 || state.done ? null : fromScene($(state.x < state.dest / 2 ? 'accel' : 'decel')),
+};
+phone.addEventListener('change', () => { if (engine) render(); });
 for (const img of [sky, rider, twin]) img.onload = () => { if (engine) render(); };
 new ResizeObserver(() => { if (engine) render(); }).observe(scene);
 try {
