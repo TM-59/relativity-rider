@@ -6,7 +6,7 @@ EMCC    ?= emcc
 PYTHON  ?= python3
 PORT    ?= 4217
 
-.PHONY: all test bench web play smoke plots clean
+.PHONY: all test bench web play smoke plots clean theory-figs theory-check
 all: relativity-rider
 
 relativity-rider: $(SRC) src/main.c
@@ -57,6 +57,18 @@ plots: relativity-rider
 	./relativity-rider --gif docs/demo.gif
 	head -c6 docs/demo.gif | grep -q GIF89a
 
+# Regenerates the plotted figures and the measured-values table of docs/theory (one command).
+theory_figs: src/relativity.c src/rider.c src/svg.c tests/theory_figs.c src/relativity.h src/rider.h src/svg.h
+	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LDLIBS)
+
+theory-figs: theory_figs
+	mkdir -p docs/theory/figures
+	./theory_figs docs/theory/figures
+
+# Fails when a statement of docs/theory has no figure, a link is broken, or a referenced function or test is gone.
+theory-check:
+	$(PYTHON) scripts/theory-check.py
+
 clean:
-	rm -f relativity-rider test_relativity test_gif test_rider
+	rm -f relativity-rider test_relativity test_gif test_rider theory_figs
 	rm -rf build dist
