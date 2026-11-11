@@ -5,6 +5,10 @@ Ride a relativistic rocket in a terminal and watch your clock fall behind Earth'
 
 ![demo](docs/demo.gif)
 
+**Theory handbook**: [docs/theory/](docs/theory/README.md) — 13 statements (the invariant interval, the Lorentz transformation, rapidity and velocity addition, time dilation, length contraction, relativity of simultaneity, hyperbolic motion, the exact step, the flip-and-burn trip, the program's rules), each with its equation, assumptions, derivation, code, tests and a figure. `make theory-figs` regenerates the figures and the measured values; `make theory-check` checks the coverage table.
+
+(理論の手引き: 式・前提・導出・実装箇所・検査を、全項目に図つきで説明します。)
+
 ## Browser observatory
 
 The same C model, compiled to WebAssembly, drives a browser spacetime diagram in the Earth frame: hold **Accelerate** / **Decelerate** (or `W` / `S`, or touch) for a constant proper acceleration of about 1 g, and try to stop on the star. The rocket's computed worldline is orange, the light cone of the departure is the dashed blue line (nothing crosses it), the star is the yellow line at 4.2 ly and the dashed purple line is the rocket's "now" (events with the same ship time). Two clock cards follow Vela, who rides the rocket (ship time τ), and Oren, the twin who stays on Earth (Earth time t). A locked experiment flies the exact 1 g flip-and-burn trip: 3.53 yr on board, 5.82 yr on Earth.
