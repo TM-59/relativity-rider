@@ -1,6 +1,6 @@
 {
-  "checks": 47,
-  "seconds": 14.066924514,
+  "checks": 79,
+  "seconds": 31.461129572999997,
   "equivalence": {
     "rows": 38,
     "columns": 19,
@@ -10,11 +10,31 @@
   "errors": 0,
   "externalRequests": 0,
   "handTrip": {
-    "tau": 3.830855212014271,
-    "t": 6.16535463074829,
-    "x": 4.249916914700483,
-    "v": -0.03638983323703984,
-    "trims": 7
+    "tau": 3.4914123451269305,
+    "t": 5.806953255276537,
+    "x": 4.224992602092888,
+    "v": 0.04547599782333795,
+    "trims": 0
+  },
+  "story": {
+    "waited": {
+      "ending": 0,
+      "ended": "You come down on the pad at last, later than you meant to. The dish mast is dark. The window lamp is not.Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow.Vela's clock: 19.09 yr. Oren's clock: 22.37 yr. Between them: 3.28 yr.",
+      "tau": 19.089999999999858,
+      "t": 22.365162094228,
+      "failures": 1,
+      "red": 4.021999999999678,
+      "steps": 1216
+    },
+    "turned": {
+      "ending": 1,
+      "ended": "You come in on fumes, a long time before anyone planned for. Nobody is on the pad.Then Oren comes running across the field with his glasses in his hand, shouting your name as if the dish could still carry it.You give him the watch. He holds it to his ear the way she used to and listens to it count out of step with his.Vela's clock: 14.78 yr. Oren's clock: 18.19 yr. Between them: 3.41 yr.",
+      "tau": 14.77999999999747,
+      "t": 18.191227945234164,
+      "failures": 2,
+      "red": 4.815999999999943,
+      "steps": 1096
+    }
   },
   "demo": {
     "x": 4.199999999999933,
@@ -30,6 +50,16 @@
     "burning.jpg",
     "demo-flip.jpg",
     "mobile.jpg",
-    "observatory.jpg"
+    "observatory.jpg",
+    "story-depot.jpg",
+    "story-dust.jpg",
+    "story-gate.jpg",
+    "story-home-turned.jpg",
+    "story-home.jpg",
+    "story-ja.jpg",
+    "story-mobile.jpg",
+    "story-pad.jpg",
+    "story-silence.jpg",
+    "story-star.jpg"
   ]
 }

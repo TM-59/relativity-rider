@@ -11,6 +11,7 @@ Why the program is correct, from the repository alone: every law, formula and ru
 1. [Spacetime: intervals, boosts, rapidity, clocks and rods](01-spacetime.md) — the invariant interval and the light cone, the Lorentz transformation, rapidity and velocity addition, time dilation, length contraction, relativity of simultaneity
 2. [The accelerating rocket](02-acceleration.md) — hyperbolic motion, the exact step, the flip-and-burn trip and its two clocks
 3. [The program: flying, arriving and drawing](03-program.md) — the demonstration, manual flight and the arrival rule, the clock gap, the worldline on screen
+4. [The Long Echo: the story trip on the same model](04-story.md) — Burn, Brake and Coast as exact steps, the brake distance and Oren's call, holds on a marker, fuel as rapidity and rescues, scenes and choices
 
 ## How the pieces depend on each other
 
@@ -33,6 +34,16 @@ flowchart TD
     S06 --> S13["S13 worldline on screen"]
     S10 --> S13
     S11 --> S13
+    S08 --> S14["S14 Burn, Brake, Coast"]
+    S11 --> S14
+    S07 --> S15["S15 brake distance, Oren's call"]
+    S01 --> S16["S16 holds: a light round trip"]
+    S04 --> S16
+    S09 --> S17["S17 fuel is rapidity, rescues"]
+    S14 --> S18["S18 scenes, choices, endings"]
+    S15 --> S18
+    S16 --> S18
+    S17 --> S18
 ```
 
 ## Coverage: statement → page → figure → code → test
@@ -52,6 +63,11 @@ flowchart TD
 | S11 | Manual flight and the arrival rule | [3](03-program.md) | mermaid | `src/rider.c#rr_thrust`, `src/rider.c#at_rest_on_star` | `tests/test_rider.c#test_manual_controls` |
 | S12 | The clock gap $t - \tau$ | [3](03-program.md) | `figures/demo.svg` | `src/rider.c#rr_value` | `tests/test_rider.c#test_demo_matches_closed_form` |
 | S13 | The worldline on the screen | [3](03-program.md) | mermaid | `src/rider.c#rr_trail_t`, `src/rider.c#rr_trail_x`, `src/render.c#render_frame` | `tests/test_rider.c#test_interval_and_trail`, `tests/test_relativity.c#test_render_fits_the_screen` |
+| S14 | Burn, Brake, Coast: the story moves the rocket only by exact steps | [4](04-story.md) | mermaid | `src/courier.c#courier_tick`, `src/relativity.c#rocket_step` | `tests/test_courier.c#[physics]` |
+| S15 | Brake distance $(\cosh\varphi - 1)/a$, the wobbling readout, Oren's call | [4](04-story.md) | mermaid | `src/courier.c#courier_brake_distance`, `src/courier.c#courier_wobble`, `src/courier.c#courier_call_on`, `src/courier.c#courier_cue` | `tests/test_courier.c#[mech] pad` |
+| S16 | Holds on a marker: a light round trip, the tanker | [4](04-story.md) | mermaid | `src/courier.c#courier_calibration_hold`, `src/courier.c#courier_hold_need` | `tests/test_courier.c#[mech] gate`, `tests/test_courier.c#[mech] star` |
+| S17 | Fuel is rapidity; leaks and rescues | [4](04-story.md) | mermaid | `src/courier.c#courier_leak`, `src/courier.c#catch_rocket`, `src/courier.c#rescue` | `tests/test_courier.c#[mech] dust`, `tests/test_courier.c#[mech] silence` |
+| S18 | Scenes, choices, heavy scenes, endings | [4](04-story.md) | mermaid | `src/courier.c#courier_init`, `src/courier.c#courier_answer`, `src/courier.c#courier_options`, `src/courier.c#courier_heavy`, `src/courier.c#courier_ending`, `src/courier.c#courier_value` | `tests/test_courier.c#[order]`, `tests/test_courier.c#[quiet] dust`, `tests/test_courier.c#[choice]` |
 
 Tests named `tests/theory_figs.c#…` are measurements recorded in [figures/values.md](figures/values.md) by `make theory-figs`, not assertions of `make test`. S05 is covered only that way (the program has no length function).
 
@@ -66,6 +82,6 @@ One thing the measurements made visible (not changed here): for a proper acceler
 
 ## Reading the source against this table
 
-Functions reviewed for this handbook: every declaration in `src/relativity.h`, `src/rider.h`, `src/render.h`, `src/svg.h` and `src/gif.h`; the static helpers `record`, `at_rest_on_star` and `finished` in `src/rider.c`; `headless` in `src/main.c`.
+Functions reviewed for this handbook: every declaration in `src/relativity.h`, `src/rider.h`, `src/courier.h`, `src/render.h`, `src/svg.h` and `src/gif.h`; the static helpers `record`, `at_rest_on_star` and `finished` in `src/rider.c` and `calibrated`, `range`, `open_scene`, `raise_banner`, `start_leg`, `clear_leg`, `fail`, `hop_need`, `catch_rocket`, `rescue` in `src/courier.c`; `headless` in `src/main.c`; the wrappers of `src/courier_web.c`, which only forward to `courier_init`, `courier_tick`, `courier_answer` and `courier_value`. The bench's pilot (tests/courier_policy.h) is test code, not a rule of the game.
 
-The model and the game are unchanged by this handbook: it adds `tests/theory_figs.c`, `scripts/theory-check.py`, two Makefile targets and these pages.
+The story layer (S14–S18) adds `src/courier.c` on top of the unchanged model. The model and the game are unchanged by this handbook: it adds `tests/theory_figs.c`, `scripts/theory-check.py`, two Makefile targets and these pages.

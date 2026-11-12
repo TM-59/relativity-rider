@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "generator": "tests/story_bench.c (make story)",
+  "note": "Scenes open at fixed progress points: the start of the trip and the end of a leg. gate 0 = wait at the Gate for the calibration echo, 1 = go on now; star 0 = wait for the tanker, 1 = turn for home now. quiet lists the heavy scenes shown with no 'marker reached' banner raised before the next frame of flight. Do not edit by hand.",
+  "seeds": [
+    {"seed": "0", "choices": {"gate": 0, "star": 0}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-waited", "quiet": ["dust", "star", "silence"]},
+    {"seed": "1", "choices": {"gate": 1, "star": 0}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-waited", "quiet": ["dust", "star", "silence"]},
+    {"seed": "2", "choices": {"gate": 0, "star": 1}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-turned", "quiet": ["dust", "star", "silence"]},
+    {"seed": "3", "choices": {"gate": 1, "star": 1}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-turned", "quiet": ["dust", "star", "silence"]},
+    {"seed": "4", "choices": {"gate": 0, "star": 0}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-waited", "quiet": ["dust", "star", "silence"]},
+    {"seed": "5", "choices": {"gate": 1, "star": 0}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-waited", "quiet": ["dust", "star", "silence"]},
+    {"seed": "6", "choices": {"gate": 0, "star": 1}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-turned", "quiet": ["dust", "star", "silence"]},
+    {"seed": "7", "choices": {"gate": 1, "star": 1}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-turned", "quiet": ["dust", "star", "silence"]},
+    {"seed": "8", "choices": {"gate": 0, "star": 0}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-waited", "quiet": ["dust", "star", "silence"]},
+    {"seed": "9", "choices": {"gate": 1, "star": 0}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-waited", "quiet": ["dust", "star", "silence"]},
+    {"seed": "10", "choices": {"gate": 0, "star": 1}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-turned", "quiet": ["dust", "star", "silence"]},
+    {"seed": "11", "choices": {"gate": 1, "star": 1}, "order": ["pad", "gate", "depot", "dust", "star", "silence", "home"], "won": true, "ending": "end-turned", "quiet": ["dust", "star", "silence"]}
+  ]
+}
