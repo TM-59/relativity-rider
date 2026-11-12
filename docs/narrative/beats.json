@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "arc": "Man in a hole, told on two clocks: Vela lifts off with Mum's watch and Oren's rule (0, quiet), Kestrel is on half rations and the Gate offers a calibration that costs a light round trip (-1), the Depot and the lamp in Mum's window (+2, the false peak), the charts were thirty years of light late and the dust is real (-2, the turn), at Kestrel the echo says Mum died three winters ago for Oren and this morning for Vela (-3), the dish is switched off and she counts alone (-3, quiet, the bottom at 0.83), home with a watch that runs slow by the twin gap (+1, bittersweet).",
+  "note": "Scenes open in src/courier.c at fixed progress points (the start of the trip and the end of each of the five legs); the words are in web/story.mjs (English and Japanese). The rocket model in src/relativity.c is unchanged: every substep is rocket_step at 0 or 1 g, and story beats change only the tank, a hold on a marker, how much the brake-distance readout wobbles, a leak and what a rescue costs. The actual order per seed is in play-order.json, story numbers on/off, per beat and per choice path in ablation.json, per-leg crises and failures in tension.json, all written by make story. tests/test_courier.c checks the physics, the order, every [mech] number, the [quiet] heavy scenes (dust, star, silence), each [beat] in the ablation rows and both choices; make test re-runs bench rows and requires them verbatim. Emotion values are the author's; the review by someone else is pending.",
+  "characters": [
+    {"id": "vela", "want": "carry the seed stock to Kestrel and come home to the same family she left", "need": "accept that the years she saves on board are years the people at home spend without her", "start": "flies on Oren's call and trusts the charts", "end": "counts her own burns in the silence and lands younger than her twin, with Mum's watch slow by the gap"},
+    {"id": "oren", "want": "keep the dish pointed at Vela every year until she is home", "need": "let the dish go and meet her as the older one", "start": "promises an echo every year and a call at every turn", "end": "switches the dish off, sends one last pulse and waits at the pad"}
+  ],
+  "beats": [
+    {"id": "pad", "chapter": 1, "summary": "The pad under the dish. Oren tops up the tank from the dish generator (3.6 to 4.4), gives Vela Mum's watch, says the rule and promises to range her every year: his echo steadies the readout and calls the turn.",
+     "valence": 0, "intensity": 1, "emotion": "relief", "tags": ["reward", "quiet"], "setup": ["s-watch", "s-rule"],
+     "mechanism": {"state": "CE_PAD", "test": "[mech] pad"}, "evidence": "Bring it back slow."},
+    {"id": "gate", "chapter": 1, "summary": "Kestrel's chief Hask: the greenhouse died, half rations until the seed lands. Oren: the dust past the Depot has thickened; hold at the Gate and he calibrates the readout, which costs a light round trip from the Gate to Earth and back.",
+     "valence": -1, "intensity": 2, "emotion": "fear", "tags": ["choice", "cost"], "setup": ["s-rations"],
+     "choice": {"options": 2, "changes": ["dust", "star"], "labels": ["Hold at the Gate for Oren's calibration (a light round trip)", "Go on now"]},
+     "mechanism": {"state": "calibrated", "test": "[mech] gate"}, "evidence": "Every year you save is a year of half rations we don't eat."},
+    {"id": "depot", "chapter": 2, "summary": "The Depot. The echo is clean, Vela is a real dot on the dish screen, Mum has put a lamp in the window and the street came out to watch the dish turn. The Depot's cache goes into the tank.",
+     "valence": 2, "intensity": 2, "emotion": "joy", "tags": ["reward", "peak"], "setup": ["s-lamp"],
+     "mechanism": {"state": "CE_CACHE", "test": "[mech] depot"}, "evidence": "She says it stays lit until you're back."},
+    {"id": "dust", "chapter": 3, "summary": "The lane the charts called clear is full of dust: the charts were made from Earth, thirty years of light late. The tank leaks, the readout jumps, and without the Gate's calibration Oren's call is scattered.",
+     "valence": -2, "intensity": 3, "emotion": "anger", "tags": ["punishment", "twist"],
+     "mechanism": {"state": "CE_DUST", "test": "[mech] dust"},
+     "presentation": {"quiet": true, "test": "[quiet] dust"},
+     "evidence": "Thirty years of light late."},
+    {"id": "star", "chapter": 3, "summary": "Kestrel takes the seed. The dish's echo waiting in Kestrel's log left Earth four years and two months earlier: Mum died the second winter after Vela left, three winters ago for Oren, this morning for Vela. Hask: wait for the tanker and fly home fuller, or go now.",
+     "valence": -3, "intensity": 3, "emotion": "sorrow", "tags": ["loss", "choice"], "irreversible": true, "payoff": ["s-rations", "s-lamp"],
+     "choice": {"options": 2, "changes": ["silence", "home"], "labels": ["Wait for Kestrel's tanker (a long wait, a fuller tank)", "Turn for home now"]},
+     "mechanism": {"state": "turned", "test": "[mech] star"},
+     "presentation": {"quiet": true, "test": "[quiet] star"},
+     "evidence": "The lamp was still on."},
+    {"id": "silence", "chapter": 4, "summary": "Oren cannot keep the dish without her; his last pulse, then nothing. Nobody steadies the readout or calls the turn, and a dry tank now drifts a year before Kestrel's tug finds it. Vela says the rule alone.",
+     "valence": -3, "intensity": 1, "emotion": "sorrow", "tags": ["loss", "quiet"], "irreversible": true, "payoff": ["s-rule"],
+     "mechanism": {"state": "CE_SILENCE", "test": "[mech] silence"},
+     "presentation": {"quiet": true, "test": "[quiet] silence"},
+     "evidence": "This is the last pulse."},
+    {"id": "home", "chapter": 5, "summary": "The pad on Earth. Oren is older than Vela now; Mum's watch has lost exactly the years she was away. The ending depends on whether she waited at Kestrel, and both clocks are shown.",
+     "valence": 1, "intensity": 2, "emotion": "relief", "tags": ["quiet"], "payoff": ["s-watch", "s-lamp"],
+     "evidence": "listens to it count out of step with his."}
+  ],
+  "endings": [
+    {"id": "end-waited", "when": {"star": 0}, "text": [
+      "You come down on the pad with fuel to spare and nobody to tell about it. The dish mast is dark. The window lamp is not.",
+      "Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.",
+      "Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow."]},
+    {"id": "end-turned", "when": {"star": 1}, "text": [
+      "You come in on fumes, a long time before anyone planned for. Nobody is on the pad.",
+      "Then Oren comes running across the field with his glasses in his hand, shouting your name as if the dish could still carry it.",
+      "You give him the watch. He holds it to his ear the way she used to and listens to it count out of step with his."]}
+  ]
+}
