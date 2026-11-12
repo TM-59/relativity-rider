@@ -14,11 +14,19 @@ C11 + libm の 1+1 次元特殊相対論シミュレータ。物理の正典は 
   Emscripten を有効にして `make web && node scripts/smoke.cjs` を手元で回す。
 - 理論の手引きは `docs/theory/`。`make theory-figs` が図と実測値の表を `tests/theory_figs.c` から再生成し、`make theory-check` が
   対応表(文 → 頁 → 図 → 関数 → テスト)の欠け・リンク切れ・消えた関数名・未掲載の公開関数で落ちる。法則・規則を足したら同じ PR で頁と図と表を足す。
-  README の「13 statements」は表の行数と合わせる。
+  README の「18 statements」は表の行数と合わせる。
 - スマホ(幅 720px 以下・高さ 500px 以下・タッチ主体)では DOM と canvas の全文字を 14 CSS px 以上、操作を 44 CSS px 以上にし、噴射ボタンは時空図の横に固定する。`make smoke` が 390×844 と 844×390 で実測する。`window.__tmGate` は読み取り専用。
 - CI は PR の軽量ゲート(docker build で `make test && make plots`)のみ。WASM ビルド・撮影・E2E はローカル専用。
 - 公開 repo。コミット・PR に生成 AI の署名、私的な情報を入れない(公開前に private 情報の検査と差分の目視を行う)。
 - 実画面は `docs/images/`(`make smoke` が撮る)、原画と生成指示・採否は `assets/art/` と `docs/art-direction.md`。
+
+## M5 の物語の層「The Long Echo」
+
+- `src/courier.c` が物語の往復(地球 → ゲート 0.8 → 補給所 2.0 → ケストレル 4.2 → 中間ブイ 2.0 → 地球)。ロケットは `rocket_step` だけで動かす(噴射 ±1 g・制動・慣性)。
+  物語の数値(燃料・待機・表示の揺れ・漏れ・救助)は `CE_*` のビットで外せる。場面の文は `web/story.mjs`(英日)。
+- `make story` が docs/narrative/{play-order,ablation,tension}.json を書き、`make test` が行を再計算して一字一句の一致と種の重複なしを強制する。
+  数値を変えたら `make story` で書き直し、`tests/test_courier.c` の `[mech]`・`[beat]`・`[choice]` を通す。CI(Debian 13)でもバイト一致すること。
+- 重い場面(塵・ケストレル・沈黙)は暗い静止パネルで、到着の帯を出さない(`[quiet]` とスモーク)。
 
 ## M4 の独自原画の例外
 

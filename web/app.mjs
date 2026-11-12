@@ -316,7 +316,7 @@ function render() {
   else label = `Coasting at ${state.v.toFixed(2)} c`;
   $('status').textContent = label;
   $('goal').hidden = !state.arrived || story;
-  $('engine').textContent = story ? (cs.drift > 0 || (cs.fuel <= 0 && cs.leg < 5) ? t$('engineDead') : state.thrust ? (cs.command === 2 ? t$('engineBrake') : t$('engineOn')) : t$('engineOff'))
+  $('engine').textContent = story ? (cs.leg >= 5 ? t$('engineOff') : cs.drift > 0 || (cs.fuel <= 0 && cs.leg < 5) ? t$('engineDead') : state.thrust ? (cs.command === 2 ? t$('engineBrake') : t$('engineOn')) : t$('engineOff'))
     : state.done ? (state.arrived ? 'Engine off · at rest on the star' : 'Engine off') : state.thrust > 0 ? 'Engine on · +1 g toward the star' : state.thrust < 0 ? 'Engine on · −1 g (braking)' : 'Engine off · coasting';
   $('accel').classList.toggle('held', state.thrust > 0 && !state.done);
   $('decel').classList.toggle('held', state.thrust < 0 && !state.done);

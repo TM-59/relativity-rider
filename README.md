@@ -5,7 +5,7 @@ Ride a relativistic rocket in a terminal and watch your clock fall behind Earth'
 
 ![demo](docs/demo.gif)
 
-**Theory handbook**: [docs/theory/](docs/theory/README.md) — 13 statements (the invariant interval, the Lorentz transformation, rapidity and velocity addition, time dilation, length contraction, relativity of simultaneity, hyperbolic motion, the exact step, the flip-and-burn trip, the program's rules), each with its equation, assumptions, derivation, code, tests and a figure. `make theory-figs` regenerates the figures and the measured values; `make theory-check` checks the coverage table.
+**Theory handbook**: [docs/theory/](docs/theory/README.md) — 18 statements (the invariant interval, the Lorentz transformation, rapidity and velocity addition, time dilation, length contraction, relativity of simultaneity, hyperbolic motion, the exact step, the flip-and-burn trip, the program's rules, and the story trip's rules), each with its equation, assumptions, derivation, code, tests and a figure. `make theory-figs` regenerates the figures and the measured values; `make theory-check` checks the coverage table.
 
 (理論の手引き: 式・前提・導出・実装箇所・検査を、全項目に図つきで説明します。)
 
@@ -21,6 +21,18 @@ The same C model, compiled to WebAssembly, drives a browser spacetime diagram in
 ![flip](docs/images/demo-flip.jpg)
 ![arrived](docs/images/arrived.jpg)
 ![mobile](docs/images/mobile.jpg)
+
+### The Long Echo (story mode)
+
+**Fly The Long Echo** sends Vela out with seed stock for Kestrel Post at the star and home again in five legs: Earth, the Gate (0.8 ly), the Depot (2.0 ly), Kestrel Post (4.2 ly), the Midway buoy (2.0 ly) and Earth. Hold **Burn** toward the marker, and when Oren calls "turn now" (or the brake distance on the panel reaches the distance left) hold **Brake** to stop on it. Seven scenes, in English or Japanese (top bar), open at fixed progress points; two of them are choices that cost years on both clocks or fuel, and the second picks one of two endings. The story never moves the rocket by itself: every step is the same exact `rocket_step`, and the scenes change only the tank, a hold on a marker, how much the readout wobbles, a leak in the dust and what a rescue costs ([theory, page 4](docs/theory/04-story.md)).
+
+| The pad | The echo at Kestrel | Home |
+|---|---|---|
+| ![pad](docs/images/story-pad.jpg) | ![star](docs/images/story-star.jpg) | ![home](docs/images/story-home.jpg) |
+
+![story on a phone](docs/images/story-mobile.jpg)
+
+`make story` flies the trip with a human-like bench pilot and writes [docs/narrative/](docs/narrative/): the order of the scenes per seed, the outcomes (Earth years, ship years, time in the red, rescues) with the story numbers on, off and one beat off at a time, each choice per path, and the crises per leg over 192 runs. `make test` re-runs rows of those files and requires them verbatim.
 
 The painted sky and the two foxes are original illustrations generated locally (see [docs/art-direction.md](docs/art-direction.md)). Their markers sit on computed events (the rocket's current event and Earth at the same Earth time); they are decoration, not extra physics.
 
@@ -60,6 +72,8 @@ A 1 g flip-and-burn trip to 4.2 ly: accelerate for half the trip, flip, decelera
 ## Tests
 
 `tests/test_relativity.c` checks: closed-form hyperbolic motion (1e-9), the worldline stays on the hyperbola, time dilation at γ = 2, boosts preserve the interval and invert cleanly, velocity addition never exceeds c and rapidities add, the flip-and-burn trip arrives at rest on target, renderer bounds.
+
+`tests/test_courier.c` checks the story layer: Burn is `rocket_step` at 1 g bit for bit with the story numbers on or off, the scene order, every number a scene changes, the heavy scenes shown without a banner, and that each choice trades one outcome for another in the bench.
 
 `tests/test_rider.c` checks that the browser adapter moves exactly like the Rocket API (bit-identical over 1,800 steps), that the scripted trip flips at 2.1 ly and stops on the star at rest with τ = 2·acosh(1 + a·d/2)/a and t = 2·sinh(a·τ/2)/a, that every worldline segment is timelike, and the manual arrival rule. `scripts/smoke.cjs` compares WASM with the native trace and flies the trip with the real buttons (results in `docs/validation.json`).
 

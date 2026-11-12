@@ -106,8 +106,8 @@ export const SCENES = [
     options: [{en: 'Fly on', ja: '飛び続ける'}]},
   {id: 'home', title: {en: 'Home', ja: '家'}, endings: [
     // 0: waited for the tanker at Kestrel
-    [{en: 'You come down on the pad with fuel to spare and nobody to tell about it. The dish mast is dark. The window lamp is not.',
-      ja: '燃料を余らせて発射台に降りる。話す相手はいない。アンテナの柱は暗い。窓のランプは暗くない。'},
+    [{en: 'You come down on the pad at last, later than you meant to. The dish mast is dark. The window lamp is not.',
+      ja: 'ようやく発射台に降りる。思っていたより遅くなった。アンテナの柱は暗い。窓のランプは暗くない。'},
      {en: 'Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.',
       ja: 'オレンが母さんのコートを着て発射台にいる。いまは彼のほうが年上で、こんにちはより先にそれを言う。'},
      {en: "Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow.",

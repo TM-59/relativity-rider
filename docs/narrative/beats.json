@@ -39,7 +39,7 @@
   ],
   "endings": [
     {"id": "end-waited", "when": {"star": 0}, "text": [
-      "You come down on the pad with fuel to spare and nobody to tell about it. The dish mast is dark. The window lamp is not.",
+      "You come down on the pad at last, later than you meant to. The dish mast is dark. The window lamp is not.",
       "Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.",
       "Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow."]},
     {"id": "end-turned", "when": {"star": 1}, "text": [

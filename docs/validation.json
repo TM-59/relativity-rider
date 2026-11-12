@@ -1,6 +1,6 @@
 {
   "checks": 79,
-  "seconds": 31.424194339000003,
+  "seconds": 31.461129572999997,
   "equivalence": {
     "rows": 38,
     "columns": 19,
@@ -10,30 +10,30 @@
   "errors": 0,
   "externalRequests": 0,
   "handTrip": {
-    "tau": 4.624358017724937,
-    "t": 6.979206720354707,
-    "x": 4.249888100496378,
-    "v": -0.03638983323703984,
-    "trims": 8
+    "tau": 3.4914123451269305,
+    "t": 5.806953255276537,
+    "x": 4.224992602092888,
+    "v": 0.04547599782333795,
+    "trims": 0
   },
   "story": {
     "waited": {
       "ending": 0,
-      "ended": "You come down on the pad with fuel to spare and nobody to tell about it. The dish mast is dark. The window lamp is not.Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow.Vela's clock: 16.57 yr. Oren's clock: 19.80 yr. Between them: 3.23 yr.",
-      "tau": 16.56999999999727,
-      "t": 19.796608902116002,
-      "failures": 0,
-      "red": 1.859999999999906,
-      "steps": 1133
+      "ended": "You come down on the pad at last, later than you meant to. The dish mast is dark. The window lamp is not.Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow.Vela's clock: 19.09 yr. Oren's clock: 22.37 yr. Between them: 3.28 yr.",
+      "tau": 19.089999999999858,
+      "t": 22.365162094228,
+      "failures": 1,
+      "red": 4.021999999999678,
+      "steps": 1216
     },
     "turned": {
       "ending": 1,
-      "ended": "You come in on fumes, a long time before anyone planned for. Nobody is on the pad.Then Oren comes running across the field with his glasses in his hand, shouting your name as if the dish could still carry it.You give him the watch. He holds it to his ear the way she used to and listens to it count out of step with his.Vela's clock: 15.24 yr. Oren's clock: 18.65 yr. Between them: 3.41 yr.",
-      "tau": 15.239999999997215,
-      "t": 18.646290655050016,
+      "ended": "You come in on fumes, a long time before anyone planned for. Nobody is on the pad.Then Oren comes running across the field with his glasses in his hand, shouting your name as if the dish could still carry it.You give him the watch. He holds it to his ear the way she used to and listens to it count out of step with his.Vela's clock: 14.78 yr. Oren's clock: 18.19 yr. Between them: 3.41 yr.",
+      "tau": 14.77999999999747,
+      "t": 18.191227945234164,
       "failures": 2,
-      "red": 5.157000000000057,
-      "steps": 1121
+      "red": 4.815999999999943,
+      "steps": 1096
     }
   },
   "demo": {
