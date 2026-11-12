@@ -54,6 +54,62 @@ async function compareWasm() {
   return {rows: row, columns: rows[0].length - 2, maxError, tolerance: 1e-9};
 }
 
+/* A pilot at the keyboard: hold W toward the marker until Oren calls "turn now" (or, without his call, until the brake
+ * distance readout reaches the distance left), then hold S until the rocket stops; repeat from there. On a hold it waits. */
+async function flyStory(page, choices, shoot) {
+  await page.locator('#story').click();
+  let key = null, phase = 'burn', s, guard = 0;
+  const seen = [], heavy = {};
+  const hold = async next => { if (key === next) return; if (key) await page.keyboard.up(key); key = next; if (key) await page.keyboard.down(key); };
+  while (guard++ < 20000) {
+    s = await snapshot(page);
+    if (s.sceneId) {
+      await hold(null);
+      if (!seen.includes(s.sceneId)) {
+        seen.push(s.sceneId);
+        const box = page.locator('#story-scene');
+        if (['dust', 'star', 'silence'].includes(s.sceneId)) {
+          heavy[s.sceneId] = (await box.getAttribute('class')) === 'heavy' && await page.locator('#banner').isHidden() && !s.bannerShown;
+        }
+        if (shoot) await capture(page, `story-${s.sceneId}`);
+        else if (s.sceneId === 'home') await capture(page, 'story-home-turned');
+      }
+      if (s.sceneId === 'home') break;
+      const option = s.sceneId === 'gate' ? choices.gate : s.sceneId === 'star' ? choices.star : 0;
+      await page.locator('#story-options button').nth(option).click();
+      phase = 'burn';
+      continue;
+    }
+    if (s.paused && !key) { await hold('w'); }
+    let step = 17;
+    if (s.holdNeed > 0 && Math.abs(s.range) < 0.049) {
+      await hold(Math.abs(s.v) > 0.004 ? 's' : null);
+      if (!key && s.paused) await page.keyboard.press('p');
+      step = key ? 17 : 200;
+    } else if (s.drift > 0) {
+      await hold(null); step = 100;
+      if (s.paused) await page.keyboard.press('p');
+    } else if (phase === 'burn') {
+      if (s.range * s.v < 0 && Math.abs(s.v) > 0.002) phase = 'brake';
+      else if (s.call ? s.cue === 1 : s.range * s.v > 0 && s.brakeRead >= Math.abs(s.range)) phase = 'brake';
+      await hold(phase === 'burn' ? 'w' : 's');
+      if (phase === 'burn' && s.brake < 0.4 * Math.abs(s.range) && !s.call) step = 50;
+    } else {
+      if (Math.abs(s.v) < 1e-9) { phase = 'burn'; await hold('w'); } else await hold('s');
+    }
+    await page.clock.runFor(step);
+  }
+  await hold(null);
+  check(s.sceneId === 'home' && s.done, `story reaches home (${seen.join(' > ')})`);
+  check(seen.join(',') === 'pad,gate,depot,dust,star,silence,home', 'scenes in the designed order');
+  check(heavy.dust && heavy.star && heavy.silence, 'heavy scenes: dark panel, no banner');
+  check(s.heavyLog.every(row => !row.bannerShown), 'no banner on screen when a heavy scene opens');
+  const ended = await page.locator('#story-text').textContent();
+  check(ended.includes(choices.star === 0 ? 'The window lamp is not.' : 'You come in on fumes'), 'the ending of the chosen path');
+  check(s.t > s.tau && Math.abs(s.gap - (s.t - s.tau)) < 1e-9, 'Oren has aged more than Vela');
+  return {ending: s.ending, ended, tau: s.tau, t: s.t, failures: s.failures, red: s.red, steps: guard};
+}
+
 async function run() {
   const started = performance.now(), equivalence = await compareWasm();
   fs.mkdirSync('docs/images', {recursive: true});
@@ -146,6 +202,25 @@ async function run() {
   const handTrip = {tau: s.tau, t: s.t, x: s.x, v: s.v, trims};
   await hand.close();
 
+  // The Long Echo: fly the whole story twice with the real keys (W burn, S brake), once down each path of the choices.
+  const story = {};
+  for (const [name, choices] of [['waited', {gate: 0, star: 0}], ['turned', {gate: 1, star: 1}]]) {
+    const pg = await context.newPage(); track(pg); await ready(pg, origin + '/');
+    story[name] = await flyStory(pg, choices, name === 'waited');
+    await pg.close();
+  }
+  check(story.waited.ending === 0 && story.turned.ending === 1, 'both endings reached with the real controls');
+  check(story.waited.ended !== story.turned.ended, 'the two endings read differently');
+  // Japanese: the same scene in the other language, switched from the top bar.
+  {
+    const pg = await context.newPage(); track(pg); await ready(pg, origin + '/');
+    await pg.locator('#story').click(); await pg.locator('#lang').click();
+    s = await snapshot(pg);
+    check(s.lang === 'ja' && s.sceneId === 'pad' && s.sceneText.includes('母さんの時計'), 'the pad scene in Japanese');
+    check((await pg.locator('#story-options button').first().textContent()) === '発進する', 'the answer in Japanese');
+    await capture(pg, 'story-ja'); await pg.close();
+  }
+
   const mobileContext = await browser.newContext({viewport: {width: 390, height: 844}, deviceScaleFactor: 1, isMobile: true, hasTouch: true});
   const mobile = await mobileContext.newPage(); track(mobile); await ready(mobile, origin + '/');
   await mobile.locator('#accel').scrollIntoViewIfNeeded(); const box = await mobile.locator('#accel').boundingBox();
@@ -193,6 +268,20 @@ async function run() {
   for (const el of await mobile.locator('button').all()) {
     const rect = await el.boundingBox(); check(rect.width >= 44 && rect.height >= 44, 'landscape buttons have 44px touch target');
   }
+  // A story scene on the phone: text at least 14 px, answers at least 44 px, in both orientations.
+  await mobile.setViewportSize({width: 390, height: 844}); await mobile.clock.runFor(100);
+  await mobile.locator('#story').scrollIntoViewIfNeeded(); await mobile.locator('#story').tap();
+  await mobile.locator('#story-scene').scrollIntoViewIfNeeded();
+  for (const [w, h] of [[390, 844], [844, 390]]) {
+    await mobile.setViewportSize({width: w, height: h}); await mobile.clock.runFor(100);
+    size = await mobile.evaluate(sizes);
+    check(size.dom >= 14 && size.canvas >= 14, `${w}x${h} story: smallest text DOM ${size.dom}px (${size.where}), canvas ${size.canvas}px`);
+    for (const el of await mobile.locator('#story-options button, #accel, #decel, #lang').all()) {
+      const rect = await el.boundingBox(); check(rect.width >= 44 && rect.height >= 44, `${w}x${h} story controls have 44px targets`);
+    }
+    check(await mobile.locator('body').evaluate(el => el.scrollWidth <= innerWidth), `${w}x${h} story has no overflow`);
+    if (w === 390) { await mobile.locator('#story-scene').scrollIntoViewIfNeeded(); await capture(mobile, 'story-mobile'); }
+  }
   await mobileContext.close();
 
   // Missing art must not block the physics.
@@ -212,7 +301,7 @@ async function run() {
   check(normalErrors.length === 0, `console/page errors ${normalErrors.join(';')}`);
   check(external.length === 0, 'no external requests');
   const result = {checks, seconds: (performance.now() - started) / 1000, equivalence, errors: normalErrors.length, externalRequests: external.length,
-    handTrip, demo: {x: demo.x, v: demo.v, tau: demo.tau, t: demo.t, gap: demo.gap, maxV: demo.maxV},
+    handTrip, story, demo: {x: demo.x, v: demo.v, tau: demo.tau, t: demo.t, gap: demo.gap, maxV: demo.maxV},
     screenshots: fs.readdirSync('docs/images').filter(file => file.endsWith('.jpg')).sort()};
   fs.writeFileSync('docs/validation.json', JSON.stringify(result, null, 2) + '\n'); console.log(JSON.stringify(result, null, 2));
 }

@@ -12,7 +12,7 @@
 <header class="topbar">
   <a class="brand" href="./" aria-label="Relativity Rider home"><span class="brandmark" aria-hidden="true">γ</span> RELATIVITY <strong>RIDER</strong></a>
   <span class="eyebrow">A SPACETIME OBSERVATORY</span>
-  <a class="about-link" href="#field-notes">How it works <span aria-hidden="true">↘</span></a>
+  <span class="top-actions"><button id="lang" class="lang" type="button" lang="ja" aria-label="Switch the story to Japanese">日本語</button><a class="about-link" href="#field-notes">How it works <span aria-hidden="true">↘</span></a></span>
 </header>
 <main>
   <section class="intro">
@@ -35,6 +35,8 @@
         <canvas id="scene" width="1080" height="520" role="img" aria-label="Spacetime diagram in the Earth frame: position in light-years across, Earth time in years upwards, with the light cone, the star's worldline and the rocket's computed worldline."></canvas>
         <div class="scene-label"><span id="status" role="status">Loading the rocket model…</span><small>Painted sky is decoration · lines are the computed worldline</small></div>
         <div id="goal" hidden>Arrived at rest on the star</div>
+        <div id="banner" role="status" hidden></div>
+        <section id="story-scene" hidden aria-live="polite" aria-labelledby="story-title"><h3 id="story-title"></h3><div id="story-text"></div><div id="story-options"></div></section>
       </div>
       <div class="legend" aria-label="Legend">
         <span><i class="key world"></i> rocket worldline (computed)</span>
@@ -49,6 +51,14 @@
         <div><span>POSITION x</span><strong id="x">—</strong><small>ly</small></div>
         <div><span>TWIN GAP t − τ</span><strong id="gap">—</strong><small>yr</small></div>
       </div>
+      <div class="story-data" id="story-data" aria-label="Trip readouts" hidden>
+        <div id="fuel-row" data-red="false"><span id="l-tank">TANK</span><strong id="s-fuel">—</strong><i class="fuel-gauge"><i id="fuel-bar"></i></i></div>
+        <div><span id="l-red">IN THE RED</span><strong id="s-red">—</strong><small id="u-red">yr</small></div>
+        <div><span id="l-failures">RESCUES</span><strong id="s-failures">0</strong></div>
+        <div><span id="l-marker">TO THE MARKER</span><strong id="s-range">—</strong><small id="u-range">ly</small></div>
+        <div><span id="l-brake">BRAKE DISTANCE (READ)</span><strong id="s-brake">—</strong><small id="u-brake">ly</small></div>
+        <div><span id="l-echo">OREN'S ECHO</span><strong id="s-echo">—</strong></div>
+      </div>
     </section>
     <aside class="control-panel" aria-label="Rocket controls">
       <p class="eyebrow">YOUR ENGINE</p><h2>Burn. Flip.<br>Burn back.</h2>
@@ -59,6 +69,9 @@
       </div>
       <div id="engine" class="engine-state" aria-live="polite">Engine off · coasting</div>
       <div class="secondary-actions"><button id="pause" disabled>Pause</button><button id="reset" disabled>Back to Earth</button><span><kbd>P</kbd> · <kbd>R</kbd></span></div>
+      <div class="experiment story-entry"><p class="eyebrow" id="story-eyebrow">OR FLY THE STORY</p>
+        <button id="story" class="primary" disabled><span id="story-label">Fly The Long Echo</span> <span aria-hidden="true">→</span></button>
+        <p id="story-note">Five legs: Earth, the Gate, the Depot, Kestrel Post at the star, the Midway buoy, home. Hold Burn toward the marker, hold Brake to stop on it.</p></div>
       <div class="experiment"><p class="eyebrow">OR WATCH AN EXPERIMENT</p>
         <button id="demo" disabled>1 g flip-and-burn trip <span aria-hidden="true">→</span></button>
         <p id="experiment-note">Your engine, your trip. Burn toward the star, flip half way and burn back to stop on it.</p></div>

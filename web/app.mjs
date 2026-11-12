@@ -1,4 +1,5 @@
 import createRider from './physics.mjs';
+import {SCENES, UI, NAMES} from './story.mjs';
 
 const $ = id => document.getElementById(id);
 const names = ['tau','t','x','v','gamma','phi','thrust','mode','steps','dest','arrived','halfTau','dtau','trail','done','gap','maxV'];
@@ -7,38 +8,59 @@ const sky = new Image(), rider = new Image(), twin = new Image();
 sky.src = 'art/deep-sky.jpg'; rider.src = 'art/rider-portrait.png'; twin.src = 'art/twin-portrait.png';
 const STEPS_PER_TICK = 2, TICK = 1 / 60;
 const C = {world: '#e69f00', cone: '#56b4e9', star: '#f0e442', now: '#cc79a7', earth: '#009e73', ink: '#c9cfe3'};
-const modeNames = ['MANUAL FLIGHT', '1 g FLIP-AND-BURN'];
+const modeNames = ['MANUAL FLIGHT', '1 g FLIP-AND-BURN', 'THE LONG ECHO'];
 const notes = [
   'Your engine, your trip. Burn toward the star, flip half way and burn back to stop on it.',
   'Full 1 g toward the star for 1.76 yr of ship time, then full 1 g back. The model is not told where to stop; it arrives because the two halves are symmetric. Controls are locked during the experiment.'
 ];
 let engine, state, paused = true, last = 0, accumulator = 0, samples = [], trail = [], held = 0;
+// The story (mode 2): the C trip of src/courier.c. Field names follow enum CourierValue in src/courier.h.
+const storyNames = ['x','t','tau','v','gamma','phi','fuel','red','leg','scene','banner','failures','from','target','range','brake',
+  'brakeRead','wobble','cue','echo','gate','calibrated','call','turned','ending','loud','heavy','command','redLine','held','holdNeed','leak','drift','gap'];
+const MARKERS = [[0.8, {en: 'Gate', ja: 'ゲート'}], [2.0, {en: 'Depot · Midway', ja: '補給所 · 中間ブイ'}]];
+const goalHTML = $('control-goal').innerHTML;
+let story = false, cs = null, shownScene = -2, storyTrail = [], heavyLog = [];
+let lang = new URLSearchParams(location.search).get('lang') === 'ja' ? 'ja' : 'en';
+const t$ = key => UI[lang][key];
+const readStory = () => Object.fromEntries(storyNames.map((name, i) => [name, engine._cw_value(i)]));
+/* The view of the story trip in the observatory's terms: position, both clocks and the engine's direction. */
+function storyView() {
+  const dir = cs.command === 1 ? Math.sign(cs.range) || 1 : cs.command === 2 && cs.phi ? -Math.sign(cs.phi) : 0;
+  return {...cs, mode: 2, dest: 4.2, thrust: cs.drift > 0 || cs.held > 0 || cs.fuel <= 0 ? 0 : dir, done: cs.leg >= 5,
+    arrived: cs.leg >= 5, steps: storyTrail.length, trail: storyTrail.length, halfTau: 0, dtau: 0.001, maxV: 0};
+}
 const read = () => Object.fromEntries(names.map((name, i) => [name, engine._rr_value(i)]));
 const overshot = () => state.x > state.dest + 0.05;
 
 function pull() {
+  if (story) { cs = readStory(); state = storyView(); trail = storyTrail; return; }
   state = read();
   trail = Array.from({length: state.trail}, (_, i) => [engine._rr_trail_x(i), engine._rr_trail_t(i)]);
 }
 function sample() { samples.push({tau: state.tau, t: state.t}); }
 function reset(mode = 0, run = false) {
-  engine._rr_reset(mode); held = 0;
+  story = mode === 2; held = 0; storyTrail = []; heavyLog = []; shownScene = -2;
+  document.body.dataset.mode = story ? 'story' : 'flight';
+  if (story) { engine._cw_reset(); cs = readStory(); storyTrail.push([cs.x, cs.t]); }
+  else engine._rr_reset(mode);
   pull(); paused = !run; accumulator = 0; samples = []; sample();
-  render();
+  showScene(); render();
 }
 function setThrust(sign) {
-  if (!engine || state.mode !== 0) return;
-  held = sign; engine._rr_thrust(sign); if (sign) burned = true;
+  if (!engine || (state.mode !== 0 && !story) || (story && cs.scene >= 0)) return;
+  held = sign; if (!story) engine._rr_thrust(sign); if (sign) burned = true;
   if (sign && paused && !state.done) { paused = false; accumulator = 0; }
   pull(); render();
 }
 function togglePause() {
-  if (!engine || state.done) return;
+  if (!engine || state.done || (story && cs.scene >= 0)) return;
   paused = !paused; accumulator = 0; render();
 }
 $('pause').onclick = togglePause;
 $('reset').onclick = () => reset(0);
 $('demo').onclick = () => reset(1, true);
+$('story').onclick = () => reset(2, false);
+$('lang').onclick = () => { lang = lang === 'en' ? 'ja' : 'en'; shownScene = -2; if (engine) { showScene(); render(); } else applyLang(); };
 for (const [id, sign] of [['accel', 1], ['decel', -1]]) {
   const button = $(id);
   button.addEventListener('pointerdown', event => { event.preventDefault(); button.setPointerCapture?.(event.pointerId); setThrust(sign); });
@@ -52,7 +74,7 @@ document.addEventListener('keydown', event => {
   event.preventDefault();
   if (event.repeat) return;
   if (key === 'p') return togglePause();
-  if (key === 'r') return reset(0);
+  if (key === 'r') return reset(story ? 2 : 0);
   setThrust(key === 'w' ? 1 : -1);
 });
 document.addEventListener('keyup', event => {
@@ -86,6 +108,96 @@ function portrait(ctx, img, x, y, r, ring) {
   ctx.strokeStyle = ring; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.stroke();
 }
 function line(ctx, x0, y0, x1, y1) { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); }
+
+// ------------------------------------------------------------------ the story: scenes and readouts
+function applyLang() {
+  document.documentElement.lang = lang;
+  $('lang').textContent = t$('lang'); $('lang').lang = lang === 'en' ? 'ja' : 'en'; $('lang').setAttribute('aria-label', t$('langLabel'));
+  $('story-label').textContent = t$('storyButton'); $('story-eyebrow').textContent = t$('storyEyebrow'); $('story-note').textContent = t$('storyNote');
+  for (const [id, key] of [['l-tank', 'tank'], ['l-red', 'red'], ['l-failures', 'failures'], ['l-marker', 'marker'], ['l-brake', 'brakeRead'], ['l-echo', 'echo']]) $(id).textContent = t$(key);
+  $('u-red').textContent = t$('yr'); $('u-range').textContent = $('u-brake').textContent = t$('ly');
+}
+function storyLines(s) {
+  if (s.endings) return s.endings[cs.ending === 0 ? 0 : 1].map(line => ['', line]);
+  return s.lines.filter(([, , when]) => !when || (when === 'calibrated') === Boolean(cs.calibrated));
+}
+function showScene() {
+  const box = $('story-scene'), index = story && cs ? cs.scene : -1;
+  if (index === shownScene) return;
+  shownScene = index;
+  if (index < 0) { box.hidden = true; return; }
+  const s = SCENES[index];
+  if (held) setThrust(0);
+  box.hidden = false;
+  box.className = s.heavy ? 'heavy' : s.endings ? 'ending' : '';
+  box.dataset.scene = s.id;
+  if (s.heavy) heavyLog.push({id: s.id, banner: cs.banner, loud: cs.loud, bannerShown: !$('banner').hidden});
+  $('story-title').textContent = s.title[lang];
+  const text = $('story-text');
+  text.replaceChildren();
+  for (const [who, words] of storyLines(s)) {
+    const p = document.createElement('p');
+    if (who) { const b = document.createElement('b'); b.textContent = NAMES[lang][who]; b.className = who; p.append(b, ' '); }
+    else p.className = 'narration';
+    p.append(words[lang]);
+    text.append(p);
+  }
+  if (s.endings) { const p = document.createElement('p'); p.className = 'clocks'; p.textContent = t$('clocks')(cs.tau, cs.t); text.append(p); }
+  if (s.note) { const p = document.createElement('p'); p.className = 'note'; p.textContent = s.note[lang]; text.append(p); }
+  const options = $('story-options');
+  options.replaceChildren();
+  s.options.forEach((label, option) => {
+    const button = document.createElement('button');
+    button.textContent = label[lang];
+    if (!option) button.className = 'primary';
+    button.onclick = () => answer(option);
+    options.append(button);
+  });
+  if (s.endings) {
+    const back = document.createElement('button');
+    back.textContent = t$('toObservatory'); back.onclick = () => reset(0);
+    options.append(back);
+  }
+  $('banner').hidden = true;
+  box.scrollTop = 0;
+  options.firstChild.focus({preventScroll: true});
+}
+function answer(option) {
+  if (!story || cs.scene < 0) return;
+  if (SCENES[cs.scene].endings) { reset(2, false); return; }
+  engine._cw_answer(option);
+  pull(); showScene();
+  // A hold on the marker (the Gate's calibration, Kestrel's tanker) runs by itself; otherwise the clock waits for your first burn.
+  paused = cs.scene >= 0 || !(cs.holdNeed > 0); accumulator = 0;
+  render();
+}
+function storyStatus() {
+  if (cs.leg >= 5) return SCENES[6].title[lang];
+  const name = t$('leg')(cs.leg + 1, t$('legs')[cs.leg]);
+  if (cs.drift > 0) return `${name} · ${t$('drifting')}`;
+  if (cs.held > 0) return `${name} · ${t$('holding')(Math.max(0, cs.holdNeed - cs.held))}`;
+  if (cs.cue) return t$('turnNow');
+  if (cs.command === 1) return `${name} · ${t$('burning')}`;
+  if (cs.command === 2) return `${name} · ${t$('braking')}`;
+  if (Math.abs(cs.range) < 0.05 && Math.abs(cs.v) < 0.05) return `${name} · ${t$('onMark')}`;
+  return `${name} · ${t$('coasting')(cs.v)}`;
+}
+function renderStory() {
+  $('s-fuel').textContent = cs.fuel.toFixed(2);
+  $('fuel-row').dataset.red = String(cs.fuel < cs.redLine);
+  $('fuel-bar').style.width = `${Math.min(100, cs.fuel / 8 * 100)}%`;
+  $('s-red').textContent = cs.red.toFixed(2);
+  $('s-failures').textContent = String(cs.failures);
+  $('s-range').textContent = Math.abs(cs.range).toFixed(2);
+  $('s-brake').textContent = cs.brakeRead.toFixed(2);
+  $('s-echo').textContent = !cs.echo ? (cs.leg < 4 ? '—' : t$('echoOff')) : cs.call ? t$('echoOn') : t$('echoDust');
+  const banner = $('banner');
+  banner.textContent = t$('banners')[cs.banner] || '';
+  banner.dataset.kind = cs.banner >= 2 ? 'fail' : 'ok';
+  // A scene on screen always hides the banner; the C trip also clears it when a heavy scene opens.
+  banner.hidden = !cs.banner || cs.scene >= 0;
+  document.querySelector('.scene-label').hidden = cs.scene >= 0;
+}
 
 /* Spacetime diagram in the Earth frame: x in light-years across, Earth time t in years upwards. */
 function drawScene() {
@@ -123,6 +235,16 @@ function drawScene() {
   ctx.strokeStyle = C.star; line(ctx, X(state.dest), Y(0), X(state.dest), top);
   ctx.fillStyle = C.star; ctx.beginPath(); ctx.arc(X(state.dest), base, 6, 0, 2 * Math.PI); ctx.fill();
   ctx.fillStyle = '#f6f0a8'; ctx.textAlign = 'center'; ctx.fillText(`star · ${state.dest.toFixed(1)} ly`, X(state.dest), top - 8);
+  if (story) {
+    // The trip's markers (at rest in this frame) and the marker of the current leg.
+    ctx.setLineDash([3, 6]); ctx.lineWidth = 1.5;
+    for (const [x, name] of MARKERS) {
+      ctx.strokeStyle = Math.abs(cs.target - x) < 1e-9 ? '#ffffffcc' : '#ffffff55'; line(ctx, X(x), Y(0), X(x), top);
+      ctx.fillStyle = '#dfe3f5'; ctx.fillText(name[lang], X(x), top - 8 - (x > 1 ? 0 : axis + 4));
+    }
+    ctx.setLineDash([]);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(cs.target), Y(state.t), 9, 0, 2 * Math.PI); ctx.stroke();
+  }
   // The rocket's "now": events with the same ship time, t' = const, i.e. t − t0 = v (x − x0).
   const nowAt = x => state.t + state.v * (x - state.x);
   ctx.strokeStyle = C.now; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
@@ -172,7 +294,10 @@ function drawPlot() {
 }
 
 function render() {
-  $('mode-name').textContent = modeNames[state.mode];
+  $('story-data').hidden = !story;
+  if (story) renderStory();
+  else { $('banner').hidden = true; document.querySelector('.scene-label').hidden = false; }
+  $('mode-name').textContent = story ? t$('mode') : modeNames[state.mode];
   $('clock').textContent = `τ = ${state.tau.toFixed(2)} yr`;
   $('v').textContent = (Math.abs(state.v) < 5e-4 ? 0 : state.v).toFixed(3);
   $('gamma').textContent = state.gamma.toFixed(3);
@@ -181,7 +306,8 @@ function render() {
   $('age-rider').textContent = `${state.tau.toFixed(2)} yr`;
   $('age-twin').textContent = `${state.t.toFixed(2)} yr`;
   let label;
-  if (state.arrived) label = `Arrived · ${state.tau.toFixed(2)} yr on board, ${state.t.toFixed(2)} yr on Earth`;
+  if (story) label = storyStatus();
+  else if (state.arrived) label = `Arrived · ${state.tau.toFixed(2)} yr on board, ${state.t.toFixed(2)} yr on Earth`;
   else if (state.done) label = 'Out of fuel time · back to Earth to try again';
   else if (paused) label = state.steps ? 'Paused' : 'Ready on Earth · hold Accelerate';
   else if (overshot()) label = state.v > 0 ? 'Past the star · decelerate to turn back' : 'Heading back toward the star';
@@ -189,23 +315,41 @@ function render() {
   else if (state.thrust < 0) label = state.v > 0 ? 'Braking · burning back' : 'Burning back toward Earth';
   else label = `Coasting at ${state.v.toFixed(2)} c`;
   $('status').textContent = label;
-  $('goal').hidden = !state.arrived;
-  $('engine').textContent = state.done ? (state.arrived ? 'Engine off · at rest on the star' : 'Engine off') : state.thrust > 0 ? 'Engine on · +1 g toward the star' : state.thrust < 0 ? 'Engine on · −1 g (braking)' : 'Engine off · coasting';
+  $('goal').hidden = !state.arrived || story;
+  $('engine').textContent = story ? (cs.drift > 0 || (cs.fuel <= 0 && cs.leg < 5) ? t$('engineDead') : state.thrust ? (cs.command === 2 ? t$('engineBrake') : t$('engineOn')) : t$('engineOff'))
+    : state.done ? (state.arrived ? 'Engine off · at rest on the star' : 'Engine off') : state.thrust > 0 ? 'Engine on · +1 g toward the star' : state.thrust < 0 ? 'Engine on · −1 g (braking)' : 'Engine off · coasting';
   $('accel').classList.toggle('held', state.thrust > 0 && !state.done);
   $('decel').classList.toggle('held', state.thrust < 0 && !state.done);
-  const locked = state.mode !== 0 || state.done;
+  const locked = (state.mode !== 0 && !story) || state.done || (story && cs.scene >= 0);
   $('accel').disabled = $('decel').disabled = locked;
+  $('accel').firstChild.textContent = story ? `${t$('burnKey')} ` : 'Accelerate ';
+  $('decel').firstChild.textContent = story ? `${t$('brakeKey')} ` : 'Decelerate ';
+  $('accel').setAttribute('aria-label', story ? t$('burn') : 'Accelerate toward the star');
+  $('decel').setAttribute('aria-label', story ? t$('brake') : 'Decelerate');
+  if (story) $('control-goal').textContent = t$('goal');
+  else if ($('control-goal').innerHTML !== goalHTML) $('control-goal').innerHTML = goalHTML;
   $('pause').textContent = paused ? 'Resume' : 'Pause';
   $('pause').disabled = !engine || state.done || (!state.steps && paused);
-  $('experiment-note').textContent = notes[state.mode];
+  $('experiment-note').textContent = notes[Math.min(state.mode, 1)];
+  applyLang();
   drawScene(); drawPlot();
-  window.rrView = {snapshot: {...state, paused, overshot: overshot(), samples: samples.length,
+  window.rrView = {snapshot: {...state, paused, overshot: !story && overshot(), samples: samples.length, story,
+    sceneId: story && cs.scene >= 0 ? SCENES[cs.scene].id : null, sceneText: $('story-scene').hidden ? '' : $('story-text').textContent,
+    bannerShown: !$('banner').hidden, heavyLog: heavyLog.map(row => ({...row})), lang,
     artReady: Boolean(sky.naturalWidth && rider.naturalWidth && twin.naturalWidth)}, engine};
 }
 function frame(timestamp) {
   if (!last) last = timestamp;
   const dt = Math.min((timestamp - last) / 1000, 0.25); last = timestamp;
-  if (engine && !paused && !state.done) {
+  if (engine && story && !paused && cs.scene < 0 && cs.leg < 5) {
+    accumulator += dt;
+    let moved = false;
+    while (accumulator >= TICK && cs.scene < 0 && cs.leg < 5) {
+      engine._cw_tick(1, held > 0 ? 1 : held < 0 ? 2 : 0); accumulator -= TICK; moved = true;
+      cs = readStory(); storyTrail.push([cs.x, cs.t]); samples.push({tau: cs.tau, t: cs.t});
+    }
+    if (moved) { pull(); if (cs.scene >= 0) { paused = true; showScene(); } render(); }
+  } else if (engine && !story && !paused && !state.done) {
     accumulator += dt;
     let moved = false;
     while (accumulator >= TICK && !state.done) {
@@ -222,13 +366,17 @@ const fromScene = el => { const c = scene.getBoundingClientRect(), r = el.getBou
 window.__tmGate = {
   version: 1,
   get logical() { const r = scene.getBoundingClientRect(); return {w: r.width || 1, h: r.height || 1}; },
-  scene: () => !engine ? 'loading' : state.done ? 'done' : paused ? 'paused' : 'play',
-  goal: () => burned,
+  scene: () => !engine ? 'loading' : story && cs.scene >= 0 ? `scene:${SCENES[cs.scene].id}` : state.done ? 'done' : paused ? 'paused' : 'play',
+  goal: () => burned || Boolean(story && cs && cs.leg > 0),
   objective: () => $('control-goal').textContent,
   texts: () => canvasTexts.map(row => ({...row})),
   targets: () => [],
   player: () => null,
-  hint: () => !engine || state.mode !== 0 || state.done ? null : fromScene($(state.x < state.dest / 2 ? 'accel' : 'decel')),
+  hint: () => {
+    if (!engine || state.done) return null;
+    if (story) return cs.scene >= 0 ? fromScene($('story-options').firstChild) : fromScene($(cs.cue || cs.range * cs.v < 0 ? 'decel' : 'accel'));
+    return state.mode !== 0 ? null : fromScene($(state.x < state.dest / 2 ? 'accel' : 'decel'));
+  },
 };
 phone.addEventListener('change', () => { if (engine) render(); });
 for (const img of [sky, rider, twin]) img.onload = () => { if (engine) render(); };
@@ -236,9 +384,10 @@ new ResizeObserver(() => { if (engine) render(); }).observe(scene);
 try {
   engine = await createRider();
   if (engine._rr_reset(0)) throw new Error('reset');
-  for (const id of ['accel', 'decel', 'reset', 'demo']) $(id).disabled = false;
+  for (const id of ['accel', 'decel', 'reset', 'demo', 'story']) $(id).disabled = false;
   reset(); requestAnimationFrame(frame);
 } catch {
   $('status').textContent = 'Rocket model unavailable — reload to retry';
+  $('story').disabled = true;
   $('experiment-note').textContent = 'The model could not load. Serve the built files over HTTP with WebAssembly enabled.';
 }

@@ -84,3 +84,38 @@ body{font-size:16px}
 .control-note,.experiment p:last-child,.field-notes p:not(.eyebrow){line-height:1.7}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+/* The Long Echo: scene panel over the diagram, banner, trip readouts. */
+.top-actions{display:flex;align-items:center;gap:14px}.lang{min-height:44px;font-size:13px;padding:8px 12px;white-space:nowrap}
+#banner{position:absolute;left:50%;top:18px;transform:translateX(-50%);font-size:14px;letter-spacing:1.4px;padding:7px 13px;border-radius:4px;border:1px solid #6fae8a;background:#0d1d16ee;color:#c6edd3;white-space:nowrap;z-index:2}
+#banner[data-kind=fail]{border-color:#c48a64;background:#24150ff0;color:#ffd2b0}
+#story-scene{position:absolute;inset:0;z-index:3;overflow-y:auto;padding:22px 26px 0;background:#0e1230f4;border-top:1px solid var(--line)}
+#story-scene h3{margin:0 0 12px;font:400 22px var(--serif);color:var(--warm)}
+#story-text p{margin:0 0 10px;font-size:15px;line-height:1.6;max-width:64ch;color:#eceadf}
+#story-text b{font-weight:650;margin-right:4px}#story-text b.oren{color:#7fd6b4}#story-text b.vela{color:#ffc46a}#story-text b.hask{color:#b9c3ff}
+#story-text .narration{color:var(--muted);font-style:italic}
+#story-text .note{color:var(--muted);font-size:14px;border-left:2px solid var(--line);padding-left:10px}
+#story-text .clocks{font:17px var(--serif);color:var(--ink);border-top:1px solid var(--line);padding-top:10px}
+#story-options{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 16px;background:#0e1230}
+#story-options button{font-size:14px;text-align:left;min-height:46px}
+#story-options .primary{width:auto}
+/* Heavy scenes (the dust, the echo at Kestrel, the silence): a dark, still panel. No banner, no colour of success. */
+#story-scene.heavy{background:#05070ef8}#story-scene.heavy h3{color:#b9c2c9;letter-spacing:.5px}
+#story-scene.heavy #story-text b{color:#c3c8cf}#story-scene.heavy #story-options{background:#05070e}
+#story-scene.heavy #story-options .primary{background:#1f2633;border-color:#4b5869;color:var(--ink);font-weight:500}
+#story-scene.ending{background:#11142af6}#story-scene.ending #story-options{background:#11142a}
+.story-data{display:grid;grid-template-columns:repeat(6,1fr);padding:0 8px 18px;border-top:1px solid var(--line);padding-top:16px}
+.story-data>div{padding:0 12px;border-right:1px solid var(--line);position:relative}.story-data>div:last-child{border:0}
+.story-data span{display:block;font-size:8px;letter-spacing:1.2px;font-weight:600;color:var(--muted);margin-bottom:7px}
+.story-data strong{font:22px var(--serif);font-variant-numeric:tabular-nums}.story-data small{font-size:10px;color:var(--muted);margin-left:5px}
+.fuel-gauge{display:block;height:4px;background:#2a3060;border-radius:2px;margin-top:6px}#fuel-bar{display:block;height:100%;background:var(--accent);border-radius:2px}
+#fuel-row[data-red=true] strong{color:#ff9b7a}#fuel-row[data-red=true] #fuel-bar{background:#ff7a5a}
+.story-entry .primary{margin:4px 0 0;font-size:13px}
+@media(max-width:1000px){.story-data{grid-template-columns:repeat(3,1fr);row-gap:14px}.story-data>div:nth-child(3){border:0}}
+@media(max-width:720px),(max-height:500px),(pointer:coarse){
+.lang,#banner,#story-text p,#story-text .note,#story-options button,.story-data span,.story-data small,.story-entry .primary{font-size:14px}
+#story-text p{font-size:15px}#banner{white-space:normal;max-width:90%;text-align:center}
+#story-scene{padding:14px 16px 0}#story-scene h3{font-size:19px}
+.story-data{grid-template-columns:repeat(2,1fr)}.story-data>div:nth-child(3){border-right:1px solid var(--line)}.story-data>div:nth-child(even){border:0}
+.story-data span{letter-spacing:.4px}
+.top-actions{gap:8px}.lang{padding:8px}
+}
