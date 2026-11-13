@@ -1,6 +1,6 @@
 {
-  "checks": 126,
-  "seconds": 119.83580552899998,
+  "checks": 154,
+  "seconds": 161.701473454,
   "equivalence": {
     "rows": 38,
     "columns": 19,
@@ -11,6 +11,12 @@
     "rows": 55,
     "columns": 55,
     "maxError": 1.2199852815313138e-16,
+    "tolerance": 1e-9
+  },
+  "skyEquivalence": {
+    "rows": 5,
+    "columns": 94,
+    "maxError": 1.1102230246251565e-16,
     "tolerance": 1e-9
   },
   "blackHole": {
@@ -29,33 +35,41 @@
       "deflectTotal": 5.534916981241436
     }
   },
+  "sky": {
+    "beta": 0.9,
+    "forward": 573,
+    "expected": 570,
+    "halfConeDeg": 25.841932763167126,
+    "dAhead": 4.358898943540674,
+    "bandAhead": 3.3633195205391515
+  },
   "errors": 0,
   "externalRequests": 0,
   "handTrip": {
-    "tau": 3.764729978205049,
-    "t": 6.09920638906994,
-    "x": 4.24999719402279,
+    "tau": 3.7955884206493526,
+    "t": 6.130095874323445,
+    "x": 4.249916814983706,
     "v": -0.03638983323703984,
     "trims": 6
   },
   "story": {
     "waited": {
       "ending": 0,
-      "ended": "You come down on the pad at last, later than you meant to. The dish mast is dark. The window lamp is not.Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow.Vela's clock: 16.36 yr. Oren's clock: 19.71 yr. Between them: 3.35 yr.",
-      "tau": 16.35999999999701,
-      "t": 19.70790850952776,
+      "ended": "You come down on the pad at last, later than you meant to. The dish mast is dark. The window lamp is not.Oren is at the pad in her coat. He is older than you now, and he says so before he says hello.Mum's watch, in your pocket, has lost exactly the years you weren't here. You hand it to him slow.Vela's clock: 16.58 yr. Oren's clock: 19.80 yr. Between them: 3.22 yr.",
+      "tau": 16.57999999999728,
+      "t": 19.79699104931131,
       "failures": 0,
-      "red": 1.6519999999999289,
-      "steps": 872
+      "red": 1.859999999999906,
+      "steps": 899
     },
     "turned": {
       "ending": 1,
-      "ended": "You come in on fumes, a long time before anyone planned for. Nobody is on the pad.Then Oren comes running across the field with his glasses in his hand, shouting your name as if the dish could still carry it.You give him the watch. He holds it to his ear the way she used to and listens to it count out of step with his.Vela's clock: 14.77 yr. Oren's clock: 18.36 yr. Between them: 3.59 yr.",
-      "tau": 14.769999999997475,
-      "t": 18.36255367576066,
+      "ended": "You come in on fumes, a long time before anyone planned for. Nobody is on the pad.Then Oren comes running across the field with his glasses in his hand, shouting your name as if the dish could still carry it.You give him the watch. He holds it to his ear the way she used to and listens to it count out of step with his.Vela's clock: 15.95 yr. Oren's clock: 19.86 yr. Between them: 3.91 yr.",
+      "tau": 15.949999999996821,
+      "t": 19.856848861097834,
       "failures": 2,
-      "red": 5.097000000000037,
-      "steps": 663
+      "red": 5.544000000000186,
+      "steps": 858
     }
   },
   "demo": {
@@ -76,6 +90,8 @@
     "demo-flip.jpg",
     "mobile.jpg",
     "observatory.jpg",
+    "sky-mobile.jpg",
+    "sky.jpg",
     "story-depot.jpg",
     "story-dust.jpg",
     "story-gate.jpg",

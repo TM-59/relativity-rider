@@ -5,7 +5,7 @@ Ride a relativistic rocket in a terminal and watch your clock fall behind Earth'
 
 ![demo](docs/demo.gif)
 
-**Theory handbook**: [docs/theory/](docs/theory/README.md) — 30 statements (the invariant interval, the Lorentz transformation, rapidity and velocity addition, time dilation, length contraction, relativity of simultaneity, hyperbolic motion, the exact step, the flip-and-burn trip, the program's rules, the story trip's rules, and — on [page 5](docs/theory/05-schwarzschild.md) — orbits around a black hole: Schwarzschild geodesics, the effective potential, circular orbits and the innermost stable one at 6M, the photon sphere, the bending of light, the periapsis precession, clocks near the hole, falling in, the fourth-order symplectic integrator and Newton's limit), each with its equation, assumptions, derivation, code, tests and a figure. `make theory-figs` regenerates the figures and the measured values; `make theory-check` checks the coverage table.
+**Theory handbook**: [docs/theory/](docs/theory/README.md) — 37 statements (the invariant interval, the Lorentz transformation, rapidity and velocity addition, time dilation, length contraction, relativity of simultaneity, hyperbolic motion, the exact step, the flip-and-burn trip, the program's rules, the story trip's rules, and — on [page 5](docs/theory/05-schwarzschild.md) — orbits around a black hole: Schwarzschild geodesics, the effective potential, circular orbits and the innermost stable one at 6M, the photon sphere, the bending of light, the periapsis precession, clocks near the hole, falling in, the fourth-order symplectic integrator and Newton's limit, and — on [page 6](docs/theory/06-aberration.md) — the view from the window: aberration and its rapidity form, the Doppler factor, the crowding of stars ahead, which power of D brightness follows, colour temperature and the visible band), each with its equation, assumptions, derivation, code, tests and a figure. `make theory-figs` regenerates the figures and the measured values; `make theory-check` checks the coverage table.
 
 (理論の手引き: 式・前提・導出・実装箇所・検査を、全項目に図つきで説明します。)
 
@@ -48,6 +48,16 @@ Below the rocket, a second panel releases a particle around a black hole of mass
 
 ![orbit](docs/orbit.svg)
 
+### The view from the window (aberration and Doppler shift)
+
+A third panel shows the whole sky as the rider sees it at a chosen speed β = v/c, beside the same sky at rest. `src/aberration.c` holds the laws — aberration cos θ′ = (cos θ + β)/(1 + β cos θ), the Doppler factor D = γ(1 + β cos θ), the solid angle dΩ′ = dΩ/D², a black body seen at D T and its visible-band flux — and `src/skyview.c` applies them to a fixed catalogue of 600 stars (one seeded random sky, even over the sphere). Each disc is centred on the direction of motion with the rim straight behind; the dashed ring holds half of all stars (half-angle arccos β). Below, the angle on board against the angle at rest, and D, D² (stars per solid angle) and the visible flux of a 5800 K star against the angle on board. At 0.9 c, 573 of the 600 stars are in the front hemisphere (570 expected), half of all stars sit inside 25.8°, light ahead is 4.36 times bluer and behind 4.36 times redder. The visible brightness of a Sun-like star ahead peaks near D = 3.2 (×3.5) and falls back below its resting value beyond D ≈ 25, as its light moves into the ultraviolet.
+
+![the view from the window](docs/images/sky.jpg)
+
+`./relativity-rider --sky docs` writes the same two skies as a chart (also part of `make plots`):
+
+![sky](docs/sky.svg)
+
 The painted sky and the two foxes are original illustrations generated locally (see [docs/art-direction.md](docs/art-direction.md)). Their markers sit on computed events (the rocket's current event and Earth at the same Earth time); they are decoration, not extra physics.
 
 ## Run
@@ -57,6 +67,7 @@ make && ./relativity-rider          # interactive
 ./relativity-rider --snapshot       # one frame, no terminal needed
 ./relativity-rider --gif docs/demo.gif  # scripted flip-and-burn trip as an animated GIF
 ./relativity-rider --orbit docs     # an orbit around a black hole as docs/orbit.svg
+./relativity-rider --sky docs       # the sky at rest and at 0.9 c as docs/sky.svg
 make test && make plots             # unit tests and docs/*.svg
 docker build -t relativity-rider .  # same, reproducibly
 make web && make play               # browser observatory at http://localhost:4217 (needs emcc)
@@ -100,10 +111,12 @@ A 1 g flip-and-burn trip to 4.2 ly: accelerate for half the trip, flip, decelera
 
 `tests/test_schwarzschild.c` checks the black-hole orbits: the force is −dV/dr, E and L read back from the integrated clock and angle, circular orbits stay circular with dφ/dt = √(M/r³) and dτ/dt = √(1 − 3M/r), the innermost stable orbit at 6M (a nudge outside oscillates, inside falls in), capture of light below 3√3 M, the bending of light against the quadrature and 4M/b + (15π/4)(M/b)², the periapsis turn against the elliptic integral (1e-9) and 6πM/p, fourth-order convergence (second for the plain leapfrog), Newton's limit, the radial fall time, and the browser adapter. `scripts/smoke.cjs` also compares its WebAssembly build with `./test_schwarzschild --trace` and drives the panel's real controls.
 
+`tests/test_aberration.c` checks the view from the window: known values (90° at rest is 60° at 0.5 c, D ahead at 0.9 c is √19), β → 0 is the identity, β then −β returns every angle, two aberrations compose like velocity addition, D and the aberration against the Lorentz boost of the photon's 4-momentum, d cos θ′/d cos θ = 1/D² and the whole sky still 4π, the catalogue's count ahead against N(1 + β)/2, the black body seen at D T and its D⁴ integral, Wien's law, the display colours and the browser adapter. `scripts/smoke.cjs` compares its WebAssembly build with `./test_aberration --trace` and drives the panel's real controls.
+
 `tests/test_rider.c` checks that the browser adapter moves exactly like the Rocket API (bit-identical over 1,800 steps), that the scripted trip flips at 2.1 ly and stops on the star at rest with τ = 2·acosh(1 + a·d/2)/a and t = 2·sinh(a·τ/2)/a, that every worldline segment is timelike, and the manual arrival rule. `scripts/smoke.cjs` compares WASM with the native trace and flies the trip with the real buttons (results in `docs/validation.json`).
 
 ## Roadmap
 
-See the Issues: twin-paradox turnaround view, relativistic aberration.
+See the Issues: twin-paradox turnaround view.
 
 Part of a series of small C physics toys, tracked in [algo-vis-panel](https://github.com/TM-59/algo-vis-panel/issues/6). MIT licensed.

@@ -1,6 +1,7 @@
 import createRider from './physics.mjs';
 import {SCENES, UI, NAMES} from './story.mjs';
 import {startOrbits} from './orbits.mjs';
+import {startSky} from './sky.mjs';
 
 const $ = id => document.getElementById(id);
 const names = ['tau','t','x','v','gamma','phi','thrust','mode','steps','dest','arrived','halfTau','dtau','trail','done','gap','maxV'];
@@ -362,7 +363,7 @@ function frame(timestamp) {
   requestAnimationFrame(frame);
 }
 // Read-only hook for the phone playability check: sizes in CSS px of the scene canvas, the first goal, the next tap.
-let burned = false, orbits = null;
+let burned = false, orbits = null, skyPanel = null;
 const fromScene = el => { const c = scene.getBoundingClientRect(), r = el.getBoundingClientRect(); return {x: r.left + r.width / 2 - c.left, y: r.top + r.height / 2 - c.top, hold: true}; };
 window.__tmGate = {
   version: 1,
@@ -370,7 +371,7 @@ window.__tmGate = {
   scene: () => !engine ? 'loading' : story && cs.scene >= 0 ? `scene:${SCENES[cs.scene].id}` : state.done ? 'done' : paused ? 'paused' : 'play',
   goal: () => burned || Boolean(story && cs && cs.leg > 0),
   objective: () => $('control-goal').textContent,
-  texts: () => canvasTexts.map(row => ({...row})).concat(orbits ? orbits.texts() : []),
+  texts: () => canvasTexts.map(row => ({...row})).concat(orbits ? orbits.texts() : [], skyPanel ? skyPanel.texts() : []),
   targets: () => [],
   player: () => null,
   hint: () => {
@@ -379,7 +380,7 @@ window.__tmGate = {
     return state.mode !== 0 ? null : fromScene($(state.x < state.dest / 2 ? 'accel' : 'decel'));
   },
 };
-phone.addEventListener('change', () => { if (engine) render(); if (orbits) orbits.rerender(); });
+phone.addEventListener('change', () => { if (engine) render(); if (orbits) orbits.rerender(); if (skyPanel) skyPanel.rerender(); });
 for (const img of [sky, rider, twin]) img.onload = () => { if (engine) render(); };
 new ResizeObserver(() => { if (engine) render(); }).observe(scene);
 try {
@@ -388,6 +389,7 @@ try {
   for (const id of ['accel', 'decel', 'reset', 'demo', 'story']) $(id).disabled = false;
   reset(); requestAnimationFrame(frame);
   orbits = startOrbits(engine, textPx);
+  skyPanel = startSky(engine, textPx);
 } catch {
   $('status').textContent = 'Rocket model unavailable — reload to retry';
   $('story').disabled = true;

@@ -13,6 +13,7 @@ Why the program is correct, from the repository alone: every law, formula and ru
 3. [The program: flying, arriving and drawing](03-program.md) — the demonstration, manual flight and the arrival rule, the clock gap, the worldline on screen
 4. [The Long Echo: the story trip on the same model](04-story.md) — Burn, Brake and Coast as exact steps, the brake distance and Oren's call, holds on a marker, fuel as rapidity and rescues, scenes and choices
 5. [Orbits around a black hole (general relativity)](05-schwarzschild.md) — Schwarzschild geodesics and their conserved E and L, the effective potential, circular orbits and the innermost stable one at 6M, the photon sphere, the bending of light, the periapsis precession, clocks near the hole, falling in, the fourth-order symplectic integrator, Newton's limit, the browser's black-hole panel
+6. [The view from the window: aberration, Doppler shift and brightness](06-aberration.md) — aberration and its rapidity form, the Doppler factor, the crowding of stars ahead (solid angle and counts), which power of D brightness follows, colour temperature and the visible band, the browser's window and the terminal's sky chart
 
 ## How the pieces depend on each other
 
@@ -62,6 +63,17 @@ flowchart TD
     S24 --> S30
     S25 --> S30
     S29 --> S30
+    S02 --> S31["S31 aberration"]
+    S03 --> S32["S32 rapidity shift, composition"]
+    S31 --> S32
+    S31 --> S33["S33 Doppler factor D"]
+    S04 --> S33
+    S33 --> S34["S34 solid angle 1/D^2, crowding"]
+    S33 --> S35["S35 brightness: powers of D"]
+    S34 --> S35
+    S35 --> S36["S36 colour, visible band"]
+    S34 --> S37["S37 the browser's window"]
+    S36 --> S37
 ```
 
 ## Coverage: statement → page → figure → code → test
@@ -98,6 +110,13 @@ flowchart TD
 | S28 | Fourth-order symplectic composition, bounded energy error | [5](05-schwarzschild.md) | `figures/order.svg`, mermaid | `src/schwarzschild.c#geo_step`, `src/schwarzschild.c#geo_leapfrog` | `tests/test_schwarzschild.c#test_order`, `tests/theory_figs.c#order-fourth` |
 | S29 | Newton's limit and the comparison orbit | [5](05-schwarzschild.md) | `figures/newton-limit.svg` | `src/schwarzschild.c#GEO_NEWTON` | `tests/test_schwarzschild.c#test_newton_limit`, `tests/theory_figs.c#newton-limit` |
 | S30 | The browser's black-hole panel and the terminal's orbit chart | [5](05-schwarzschild.md) | mermaid | `src/orbit.c#so_reset`, `src/orbit.c#so_step`, `src/orbit.c#so_value`, `src/orbit.c#so_trail_x`, `src/orbit.c#so_trail_y`, `src/orbit.c#so_ntrail_x`, `src/orbit.c#so_ntrail_y`, `src/orbit.c#so_apsis`, `src/main.c#orbit_svg` | `tests/test_schwarzschild.c#test_adapter`, `tests/theory_figs.c#adapter-precession` |
+| S31 | Aberration $\cos\theta' = (\cos\theta + \beta)/(1 + \beta\cos\theta)$ | [6](06-aberration.md) | `figures/aberration.svg` | `src/aberration.c#ab_cos_ship`, `src/aberration.c#ab_cos_rest` | `tests/test_aberration.c#test_known_values`, `tests/test_aberration.c#test_against_boost`, `tests/theory_figs.c#ab-round-trip` |
+| S32 | $\tan(\theta'/2) = e^{-\varphi}\tan(\theta/2)$: aberration composes like velocity addition | [6](06-aberration.md) | `figures/aberration-rapidity.svg` | `src/aberration.c#ab_theta_ship`, `src/aberration.c#ab_rapidity` | `tests/test_aberration.c#test_composition`, `tests/theory_figs.c#ab-shift`, `tests/theory_figs.c#ab-compose` |
+| S33 | Doppler factor $D = \gamma(1 + \beta\cos\theta) = 1/(\gamma(1 - \beta\cos\theta'))$ | [6](06-aberration.md) | `figures/doppler.svg` | `src/aberration.c#ab_doppler_rest`, `src/aberration.c#ab_doppler_ship`, `src/aberration.c#ab_gamma` | `tests/test_aberration.c#test_identity_and_round_trip`, `tests/theory_figs.c#doppler-boost` |
+| S34 | Solid angle $d\Omega' = d\Omega/D^2$; half of the stars inside $\arccos\beta$ | [6](06-aberration.md) | `figures/star-density.svg` | `src/aberration.c#ab_solid_angle`, `src/aberration.c#ab_cone_fraction`, `src/aberration.c#ab_half_cone` | `tests/test_aberration.c#test_solid_angle_and_counts`, `tests/theory_figs.c#solid-total`, `tests/theory_figs.c#catalogue-cone` |
+| S35 | Brightness: $I_\nu/\nu^3$ invariant, intensity $D^4$, point-star flux $D^2$ | [6](06-aberration.md) | `figures/brightness.svg` | `src/aberration.c#ab_planck`, `src/aberration.c#ab_band` | `tests/test_aberration.c#test_intensity_powers`, `tests/theory_figs.c#stefan-d4`, `tests/theory_figs.c#flux-d2` |
+| S36 | Colour temperature $DT$, Wien's law, visible-band flux | [6](06-aberration.md) | `figures/colour.svg` | `src/aberration.c#ab_band_ratio`, `src/aberration.c#ab_peak_nm`, `src/aberration.c#ab_colour` | `tests/test_aberration.c#test_wien_and_colour`, `tests/theory_figs.c#band-peak` |
+| S37 | The browser's window and the terminal's sky chart | [6](06-aberration.md) | mermaid | `src/skyview.c#sv_reset`, `src/skyview.c#sv_value`, `src/skyview.c#sv_star`, `src/skyview.c#sv_curve`, `src/main.c#sky_svg` | `tests/test_aberration.c#test_adapter`, `tests/theory_figs.c#adapter-sky-d` |
 
 Tests named `tests/theory_figs.c#…` are measurements recorded in [figures/values.md](figures/values.md) by `make theory-figs`, not assertions of `make test`. S05 is covered only that way (the program has no length function).
 
@@ -113,6 +132,6 @@ One thing the measurements made visible (not changed here): for a proper acceler
 
 ## Reading the source against this table
 
-Functions reviewed for this handbook: every declaration in `src/relativity.h`, `src/rider.h`, `src/courier.h`, `src/render.h`, `src/svg.h`, `src/gif.h`, `src/schwarzschild.h` and `src/orbit.h`; the static helpers `kick`, `drift`, `kdk`, `roots`, `polish`, `g_of`, `sweep`, `circular` and `ellip_k` in `src/schwarzschild.c` and `record`, `add_apsis`, `advance`, `curve_r` and `trail_at` in `src/orbit.c`; `orbit_svg` in `src/main.c`; the static helpers `record`, `at_rest_on_star` and `finished` in `src/rider.c` and `calibrated`, `range`, `open_scene`, `raise_banner`, `start_leg`, `clear_leg`, `fail`, `hop_need`, `catch_rocket`, `rescue` in `src/courier.c`; `headless` in `src/main.c`; the wrappers of `src/courier_web.c`, which only forward to `courier_init`, `courier_tick`, `courier_answer` and `courier_value`. The bench's pilot (tests/courier_policy.h) is test code, not a rule of the game.
+Functions reviewed for this handbook: every declaration in `src/relativity.h`, `src/rider.h`, `src/courier.h`, `src/render.h`, `src/svg.h`, `src/gif.h`, `src/schwarzschild.h`, `src/orbit.h`, `src/aberration.h` and `src/skyview.h`; the static helpers `planck_lambda` in `src/aberration.c` and `splitmix`, `uniform`, `catalogue` and `place` in `src/skyview.c`; `sky_svg` in `src/main.c`; the static helpers `kick`, `drift`, `kdk`, `roots`, `polish`, `g_of`, `sweep`, `circular` and `ellip_k` in `src/schwarzschild.c` and `record`, `add_apsis`, `advance`, `curve_r` and `trail_at` in `src/orbit.c`; `orbit_svg` in `src/main.c`; the static helpers `record`, `at_rest_on_star` and `finished` in `src/rider.c` and `calibrated`, `range`, `open_scene`, `raise_banner`, `start_leg`, `clear_leg`, `fail`, `hop_need`, `catch_rocket`, `rescue` in `src/courier.c`; `headless` in `src/main.c`; the wrappers of `src/courier_web.c`, which only forward to `courier_init`, `courier_tick`, `courier_answer` and `courier_value`. The bench's pilot (tests/courier_policy.h) is test code, not a rule of the game.
 
-The story layer (S14–S18) adds `src/courier.c` on top of the unchanged model. The black-hole page (S19–S30) adds `src/schwarzschild.c` and `src/orbit.c` beside it; the special-relativity model, its outputs and the story rows are unchanged by it. The model and the game are unchanged by this handbook: it adds `tests/theory_figs.c`, `scripts/theory-check.py`, two Makefile targets and these pages.
+The story layer (S14–S18) adds `src/courier.c` on top of the unchanged model. The black-hole page (S19–S30) adds `src/schwarzschild.c` and `src/orbit.c` beside it, and the window page (S31–S37) adds `src/aberration.c` and `src/skyview.c`; the special-relativity model, its outputs and the story rows are unchanged by it. The model and the game are unchanged by this handbook: it adds `tests/theory_figs.c`, `scripts/theory-check.py`, two Makefile targets and these pages.

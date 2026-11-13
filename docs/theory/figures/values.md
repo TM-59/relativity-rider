@@ -1,7 +1,7 @@
 # Measured values
 
 Written by `make theory-figs` (tests/theory_figs.c) from the program's own functions. Do not edit by hand.
-Units: c = 1, times in years, lengths in light-years; on page 5 G = c = M = 1, lengths and times in M. The last column is the relative error; where the theory column is 0 it is the absolute value.
+Units: c = 1, times in years, lengths in light-years; on page 5 G = c = M = 1, lengths and times in M; on page 6 angles in degrees, temperatures in K and brightness as a ratio to the star at rest. The last column is the relative error; where the theory column is 0 it is the absolute value.
 
 | id | what is measured | measured | theory | error |
 |---|---|---|---|---|
@@ -119,3 +119,35 @@ Units: c = 1, times in years, lengths in light-years; on page 5 G = c = M = 1, l
 | `adapter-drift` | largest abs(H / H0 - 1) over those steps (theory 0) | 2.22066809e-12 | 0 | 2.22e-12 |
 | `adapter-deflection` | light b = 6: angle gained inside 30 M over the straight line, integrated [rad] (theory the quadrature) | 1.71952688 | 1.71952702 | 8.13e-08 |
 | `adapter-plunge` | state of r0 = 40, L = 3.2 < sqrt 12 (theory 1: captured), while Newton's orbit stays | 1 | 1 | 0.00e+00 |
+| `ab-90-0.5` | angle on board of a star at 90 deg at rest, beta 0.5 [deg] (theory acos 0.5 = 60) | 60 | 60 | 2.22e-16 |
+| `ab-90-0.9` | the same at beta 0.9 [deg] (theory acos 0.9) | 25.8419328 | 25.8419328 | 0.00e+00 |
+| `ab-round-trip` | largest abs(cos theta) error after beta then -beta, beta 0.1 to 0.99, 2001 angles (theory 0) | 2.55351296e-15 | 0 | 2.55e-15 |
+| `ab-identity` | largest change of cos theta at beta 1e-12 (theory beta sin^2 theta, at most 1e-12: first order in beta, vanishing with it) | 1e-12 | 1e-12 | 0.00e+00 |
+| `ab-shift` | ln tan(theta'/2) - ln tan(theta/2) at theta = 60 deg, beta 0.9 (theory -atanh 0.9) | -1.47221949 | -1.47221949 | 7.77e-16 |
+| `ab-compose` | largest cos theta difference between two aberrations and one at the combined velocity, 42 pairs x 101 angles (theory 0) | 5.77315973e-15 | 0 | 5.77e-15 |
+| `doppler-ahead` | D straight ahead at 0.9 c (theory sqrt((1 + beta) / (1 - beta)) = sqrt 19) | 4.35889894 | 4.35889894 | 0.00e+00 |
+| `doppler-behind` | D straight behind (theory 1 / sqrt 19) | 0.229415734 | 0.229415734 | 0.00e+00 |
+| `doppler-side-rest` | D of a star at 90 deg in the rest frame (theory gamma: transverse blue shift) | 2.29415734 | 2.29415734 | 0.00e+00 |
+| `doppler-side-ship` | D of a star seen at 90 deg on board (theory 1 / gamma: transverse red shift) | 0.435889894 | 0.435889894 | 0.00e+00 |
+| `doppler-unshifted` | D at the ship angle acos((1 - 1/gamma) / beta) = 64.2 deg, where colours are unchanged (theory 1) | 1 | 1 | 2.22e-16 |
+| `doppler-boost` | largest relative difference between D and omega' / omega from the Lorentz boost of the photon's 4-momentum, 181 angles (theory 0) | 1.55431223e-15 | 0 | 1.55e-15 |
+| `solid-jacobian` | largest relative difference between d cos theta' / d cos theta (finite differences) and 1 / D^2 at 0.9 c (theory 0) | 1.19730981e-09 | 0 | 1.20e-09 |
+| `solid-total` | solid angle of the whole sky on board at 0.99 c, integral of dOmega / D^2 over 4 pi [sr] (theory 4 pi) | 12.5663706 | 12.5663706 | 1.29e-09 |
+| `density-ahead` | stars per solid angle straight ahead at 0.9 c over at rest (theory D^2 = 19) | 19 | 19 | 2.22e-16 |
+| `cone-half` | fraction of all stars seen inside acos(beta) at 0.9 c (theory 1/2) | 0.5 | 0.5 | 0.00e+00 |
+| `catalogue-ahead` | catalogue stars seen in the front hemisphere at 0.9 c, out of 600 (theory 600 (1 + beta) / 2 = 570, one random sky) | 573 | 570 | 5.26e-03 |
+| `catalogue-cone` | catalogue stars inside acos 0.9 on board against those in the front half at rest (theory equal, star by star) | 298 | 298 | 0.00e+00 |
+| `planck-invariance` | largest relative difference between D^3 B(nu / D, T) and B(nu, D T), 100 D x 100 nu (theory 0: I_nu / nu^3 is invariant) | 6.66133815e-16 | 0 | 6.66e-16 |
+| `stefan-d4` | bolometric intensity of a 5800 K black body seen with D = sqrt 19 over at rest, by quadrature (theory D^4 = 361) | 361 | 361 | 1.57e-13 |
+| `flux-d2` | bolometric flux of a point star: intensity D^4 times solid angle D^-2 (theory D^2 = 19) | 19 | 19 | 1.57e-13 |
+| `distance-d` | distance on board to the emission event of light that left a star straight ahead 1 yr ago (theory D = sqrt 19: so D^2 / r^2 = D^4 / r'^2) | 4.35889894 | 4.35889894 | 0.00e+00 |
+| `wien` | peak of B_lambda at 5800 K by golden-section search, times T [nm K] (theory Wien's b = 2.8978e6) | 2897771.94 | 2897771.96 | 3.89e-09 |
+| `colour-white` | smallest channel of the display colour at 6500 K (theory 1: white by construction) | 1 | 1 | 0.00e+00 |
+| `band-peak` | largest visible-band brightening of a 5800 K star over D (no closed form: the theory column repeats the measurement) | 3.5257566 | 3.5257566 | 0.00e+00 |
+| `band-peak-d` | the D of that peak (no closed form; stars seen with this D are brightest to the eye) | 3.21622391 | 3.21622391 | 0.00e+00 |
+| `band-back` | the D beyond which the visible band is fainter than at rest again (no closed form; the light has moved to the ultraviolet) | 25.4748233 | 25.4748233 | 0.00e+00 |
+| `band-0.99` | visible-band brightening straight ahead at 0.99 c, D = sqrt 199 (no closed form) | 1.65529278 | 1.65529278 | 0.00e+00 |
+| `adapter-sky-d` | SV_D_AHEAD at 0.9 c (theory sqrt 19) | 4.35889894 | 4.35889894 | 0.00e+00 |
+| `adapter-sky-cone` | SV_HALF_CONE at 0.9 c [rad] (theory acos 0.9) | 0.451026812 | 0.451026812 | 0.00e+00 |
+| `adapter-sky-curve` | sv_curve(90, SV_C_THETA_SHIP) at 0.9 c [deg] (theory acos 0.9 in degrees) | 25.8419328 | 25.8419328 | 5.55e-16 |
+| `adapter-sky-rest` | stars ahead at rest out of 600 (theory 300, one random sky) | 298 | 300 | 6.67e-03 |

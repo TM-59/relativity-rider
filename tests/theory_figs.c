@@ -2,10 +2,12 @@
  * (docs/theory/figures/values.md). Run with `make theory-figs`. Each figure is produced by the
  * same model (src/relativity.c) and browser adapter (src/rider.c) the program uses; nothing here
  * changes them. */
+#include "../src/aberration.h"
 #include "../src/relativity.h"
 #include "../src/orbit.h"
 #include "../src/rider.h"
 #include "../src/schwarzschild.h"
+#include "../src/skyview.h"
 #include "../src/svg.h"
 
 #include <math.h>
@@ -717,13 +719,209 @@ static void val_geo_adapter(void)
     value("adapter-plunge", "state of r0 = 40, L = 3.2 < sqrt 12 (theory 1: captured), while Newton's orbit stays", so_value(SO_STATE) + so_value(SO_NSTATE), 1.0);
 }
 
+/* ---------------------------------------------------------------- page 6: the view from the window */
+#define PI6 3.14159265358979323846
+
+/* S31: aberration, theta' against theta. */
+static void fig_aberration(void)
+{
+    int n = 0;
+    for (int i = 0; i <= 180; i++, n++) {
+        double c = cos(i * PI6 / 180.0);
+        xs[n] = (float)i;
+        ya[n] = (float)i;
+        yb[n] = (float)(acos(ab_cos_ship(0.5, c)) * 180.0 / PI6);
+        yc[n] = (float)(acos(ab_cos_ship(0.9, c)) * 180.0 / PI6);
+        yd[n] = (float)(acos(ab_cos_ship(0.99, c)) * 180.0 / PI6);
+    }
+    double worst = 0.0, worst0 = 0.0;
+    for (int i = 0; i <= 2000; i++) {
+        double c = -1.0 + i / 1000.0;
+        for (double b = 0.1; b < 0.9951; b += 0.1) worst = fmax(worst, fabs(ab_cos_rest(b, ab_cos_ship(b, c)) - c));
+        worst0 = fmax(worst0, fabs(ab_cos_ship(1e-12, c) - c));
+    }
+    value("ab-90-0.5", "angle on board of a star at 90 deg at rest, beta 0.5 [deg] (theory acos 0.5 = 60)", acos(ab_cos_ship(0.5, 0.0)) * 180.0 / PI6, 60.0);
+    value("ab-90-0.9", "the same at beta 0.9 [deg] (theory acos 0.9)", acos(ab_cos_ship(0.9, 0.0)) * 180.0 / PI6, acos(0.9) * 180.0 / PI6);
+    value("ab-round-trip", "largest abs(cos theta) error after beta then -beta, beta 0.1 to 0.99, 2001 angles (theory 0)", worst, 0.0);
+    value("ab-identity", "largest change of cos theta at beta 1e-12 (theory beta sin^2 theta, at most 1e-12: first order in beta, vanishing with it)", worst0, 1e-12);
+    Series s[] = {{"at rest", ya, "#888888"}, {"0.5 c", yb, "#1f77b4"}, {"0.9 c", yc, "#e69f00"}, {"0.99 c", yd, "#d62728"}};
+    plot("aberration.svg", "Where a star is seen on board: theta' against theta", "angle at rest theta [deg]", "angle on board theta' [deg]", n, s, 4);
+}
+
+/* S32: aberration shifts ln tan(theta/2) by the rapidity, so it composes like velocity addition. */
+static void fig_aberration_rapidity(void)
+{
+    int n = 0;
+    for (int i = 2; i <= 178; i += 2, n++) {
+        double th = i * PI6 / 180.0, u = log(tan(0.5 * th));
+        xs[n] = (float)u;
+        ya[n] = (float)u;
+        yb[n] = (float)log(tan(0.5 * ab_theta_ship(0.5, th)));
+        yc[n] = (float)log(tan(0.5 * ab_theta_ship(0.9, th)));
+    }
+    double th = PI6 / 3.0, shift = log(tan(0.5 * acos(ab_cos_ship(0.9, cos(th))))) - log(tan(0.5 * th)), worst = 0.0;
+    for (double b1 = -0.9; b1 <= 0.91; b1 += 0.3)
+        for (double b2 = -0.6; b2 <= 0.91; b2 += 0.5)
+            for (int i = 0; i <= 100; i++) {
+                double c = -1.0 + i / 50.0;
+                worst = fmax(worst, fabs(ab_cos_ship(b2, ab_cos_ship(b1, c)) - ab_cos_ship(add_velocity(b1, b2), c)));
+            }
+    value("ab-shift", "ln tan(theta'/2) - ln tan(theta/2) at theta = 60 deg, beta 0.9 (theory -atanh 0.9)", shift, -atanh(0.9));
+    value("ab-compose", "largest cos theta difference between two aberrations and one at the combined velocity, 42 pairs x 101 angles (theory 0)", worst, 0.0);
+    Series s[] = {{"at rest", ya, "#888888"}, {"0.5 c", yb, "#1f77b4"}, {"0.9 c", yc, "#e69f00"}};
+    plot("aberration-rapidity.svg", "ln tan(theta'/2) = ln tan(theta/2) - rapidity: aberration is a shift", "ln tan(theta / 2)", "ln tan(theta' / 2)", n, s, 3);
+}
+
+/* S33: the Doppler factor against the angle on board. */
+static void fig_doppler(void)
+{
+    int n = 0;
+    for (int i = 0; i <= 180; i++, n++) {
+        double c = cos(i * PI6 / 180.0);
+        xs[n] = (float)i;
+        ya[n] = (float)log10(ab_doppler_ship(0.5, c));
+        yb[n] = (float)log10(ab_doppler_ship(0.9, c));
+        yc[n] = (float)log10(ab_doppler_ship(0.99, c));
+    }
+    double worst = 0.0;
+    for (int i = 0; i <= 180; i++) {
+        double th = i * PI6 / 180.0, w2, k2;
+        boost(atanh(0.9), 1.0, -cos(th), &w2, &k2);
+        worst = fmax(worst, fabs(w2 / ab_doppler_rest(0.9, cos(th)) - 1.0));
+    }
+    double g = ab_gamma(0.9), cnull = (1.0 - 1.0 / g) / 0.9;
+    value("doppler-ahead", "D straight ahead at 0.9 c (theory sqrt((1 + beta) / (1 - beta)) = sqrt 19)", ab_doppler_ship(0.9, 1.0), sqrt(19.0));
+    value("doppler-behind", "D straight behind (theory 1 / sqrt 19)", ab_doppler_ship(0.9, -1.0), 1.0 / sqrt(19.0));
+    value("doppler-side-rest", "D of a star at 90 deg in the rest frame (theory gamma: transverse blue shift)", ab_doppler_rest(0.9, 0.0), g);
+    value("doppler-side-ship", "D of a star seen at 90 deg on board (theory 1 / gamma: transverse red shift)", ab_doppler_ship(0.9, 0.0), 1.0 / g);
+    value("doppler-unshifted", "D at the ship angle acos((1 - 1/gamma) / beta) = 64.2 deg, where colours are unchanged (theory 1)", ab_doppler_ship(0.9, cnull), 1.0);
+    value("doppler-boost", "largest relative difference between D and omega' / omega from the Lorentz boost of the photon's 4-momentum, 181 angles (theory 0)", worst, 0.0);
+    Series s[] = {{"0.5 c", ya, "#1f77b4"}, {"0.9 c", yb, "#e69f00"}, {"0.99 c", yc, "#d62728"}};
+    plot("doppler.svg", "Doppler factor against the angle on board (log10 D)", "angle on board theta' [deg]", "log10 D", n, s, 3);
+}
+
+/* S34: the solid angle shrinks ahead by 1/D^2; fraction of all stars inside an angle on board. */
+static void fig_star_density(void)
+{
+    int n = 0;
+    for (int i = 0; i <= 180; i++, n++) {
+        double c = cos(i * PI6 / 180.0);
+        xs[n] = (float)i;
+        ya[n] = (float)ab_cone_fraction(0.0, c);
+        yb[n] = (float)ab_cone_fraction(0.5, c);
+        yc[n] = (float)ab_cone_fraction(0.9, c);
+        yd[n] = (float)ab_cone_fraction(0.99, c);
+    }
+    double worst = 0.0;
+    for (int i = 1; i < 200; i++) {
+        double c = -1.0 + i / 100.0, h = 1e-6;
+        worst = fmax(worst, fabs((ab_cos_ship(0.9, c + h) - ab_cos_ship(0.9, c - h)) / (2.0 * h) / ab_solid_angle(0.9, c) - 1.0));
+    }
+    enum { N = 20000 };
+    double sum = ab_solid_angle(0.99, -1.0) + ab_solid_angle(0.99, 1.0), h = 2.0 / N;
+    for (int i = 1; i < N; i++) sum += (i % 2 ? 4.0 : 2.0) * ab_solid_angle(0.99, -1.0 + i * h);
+    sv_reset(0.9);
+    int inside = 0;
+    for (int i = 0; i < SV_STARS_MAX; i++) inside += sv_star(i, SV_COS_SHIP) >= 0.9 - 1e-12;
+    value("solid-jacobian", "largest relative difference between d cos theta' / d cos theta (finite differences) and 1 / D^2 at 0.9 c (theory 0)", worst, 0.0);
+    value("solid-total", "solid angle of the whole sky on board at 0.99 c, integral of dOmega / D^2 over 4 pi [sr] (theory 4 pi)", 2.0 * PI6 * sum * h / 3.0, 4.0 * PI6);
+    value("density-ahead", "stars per solid angle straight ahead at 0.9 c over at rest (theory D^2 = 19)", 1.0 / ab_solid_angle(0.9, 1.0), 19.0);
+    value("cone-half", "fraction of all stars seen inside acos(beta) at 0.9 c (theory 1/2)", ab_cone_fraction(0.9, 0.9), 0.5);
+    value("catalogue-ahead", "catalogue stars seen in the front hemisphere at 0.9 c, out of 600 (theory 600 (1 + beta) / 2 = 570, one random sky)", sv_value(SV_FORWARD), 570.0);
+    value("catalogue-cone", "catalogue stars inside acos 0.9 on board against those in the front half at rest (theory equal, star by star)", inside, sv_value(SV_REST_FORWARD));
+    Series s[] = {{"at rest", ya, "#888888"}, {"0.5 c", yb, "#1f77b4"}, {"0.9 c", yc, "#e69f00"}, {"0.99 c", yd, "#d62728"}};
+    plot("star-density.svg", "Fraction of all stars seen within an angle of the direction of motion", "angle on board theta' [deg]", "fraction of stars", n, s, 4);
+}
+
+static double fig_seen(double nu, double D, double T) { return D * D * D * ab_planck(nu / D, T); }
+static double fig_integral(double D, double T)
+{
+    enum { N = 200000 };
+    double top = 40.0 * D * T / AB_C2, h = top / N, sum = fig_seen(top, D, T);
+    for (int i = 1; i < N; i++) sum += (i % 2 ? 4.0 : 2.0) * fig_seen(i * h, D, T);
+    return sum * h / 3.0;
+}
+
+/* S35: the powers of D: specific intensity D^3, bolometric intensity D^4, solid angle D^-2, point-star flux D^2. */
+static void fig_brightness(void)
+{
+    int n = 0;
+    for (int i = 0; i <= 180; i++, n++) {
+        double D = ab_doppler_ship(0.9, cos(i * PI6 / 180.0));
+        xs[n] = (float)i;
+        ya[n] = (float)(2.0 * log10(D));
+        yb[n] = (float)(3.0 * log10(D));
+        yc[n] = (float)(4.0 * log10(D));
+        yd[n] = (float)log10(ab_band_ratio(D, SV_SUN));
+    }
+    double worst = 0.0;
+    for (int i = 1; i <= 100; i++) {
+        double D = ab_doppler_rest(0.9, -1.0 + i / 50.0), nu = i * 4e-5;
+        worst = fmax(worst, fabs(fig_seen(nu, D, 5800.0) / ab_planck(nu, D * 5800.0) - 1.0));
+    }
+    double D = sqrt(19.0), rest = fig_integral(1.0, 5800.0), moving = fig_integral(D, 5800.0), t2, x2;
+    boost(atanh(0.9), -1.0, 1.0, &t2, &x2);
+    value("planck-invariance", "largest relative difference between D^3 B(nu / D, T) and B(nu, D T), 100 D x 100 nu (theory 0: I_nu / nu^3 is invariant)", worst, 0.0);
+    value("stefan-d4", "bolometric intensity of a 5800 K black body seen with D = sqrt 19 over at rest, by quadrature (theory D^4 = 361)", moving / rest, pow(D, 4.0));
+    value("flux-d2", "bolometric flux of a point star: intensity D^4 times solid angle D^-2 (theory D^2 = 19)", moving / rest * ab_solid_angle(0.9, 1.0), 19.0);
+    value("distance-d", "distance on board to the emission event of light that left a star straight ahead 1 yr ago (theory D = sqrt 19: so D^2 / r^2 = D^4 / r'^2)", -t2, D);
+    Series s[] = {{"D^2 point star", ya, "#cc79a7"}, {"D^3", yb, "#009e73"}, {"D^4 intensity", yc, "#e69f00"}, {"visible, 5800 K", yd, "#56b4e9"}};
+    plot("brightness.svg", "How much brighter at 0.9 c: powers of D and the visible band (log10)", "angle on board theta' [deg]", "log10 ratio to at rest", n, s, 4);
+}
+
+/* S36: the colour temperature D T and the visible-band brightness against D. */
+static void fig_colour(void)
+{
+    int n = 0;
+    for (double lg = -0.7; lg <= 2.0001 && n < MAXN; lg += 0.02, n++) {
+        double D = pow(10.0, lg);
+        xs[n] = (float)lg;
+        ya[n] = (float)log10(ab_band_ratio(D, SV_SUN));
+        yb[n] = (float)(2.0 * lg);
+        yc[n] = (float)log10(D * SV_SUN / 1e4);
+    }
+    double best = 0.0, bd = 1.0, back = 0.0;
+    for (double D = 1.0; D < 200.0; D *= 1.0005) {
+        double r = ab_band_ratio(D, SV_SUN);
+        if (r > best) { best = r; bd = D; }
+        if (D > bd && r < 1.0 && back == 0.0) back = D;
+    }
+    double a = 50.0, b = 3000.0, g = 0.5 * (sqrt(5.0) - 1.0), T = 5800.0;
+    for (int i = 0; i < 200; i++) {
+        double x1 = b - g * (b - a), x2 = a + g * (b - a);
+        double f1 = 1.0 / (pow(x1, 5.0) * expm1(AB_C2 / (x1 * T))), f2 = 1.0 / (pow(x2, 5.0) * expm1(AB_C2 / (x2 * T)));
+        if (f1 > f2) b = x2; else a = x1;
+    }
+    double rgb[3];
+    ab_colour(6500.0, rgb);
+    value("wien", "peak of B_lambda at 5800 K by golden-section search, times T [nm K] (theory Wien's b = 2.8978e6)", 0.5 * (a + b) * T, AB_WIEN);
+    value("colour-white", "smallest channel of the display colour at 6500 K (theory 1: white by construction)", fmin(rgb[0], fmin(rgb[1], rgb[2])), 1.0);
+    value("band-peak", "largest visible-band brightening of a 5800 K star over D (no closed form: the theory column repeats the measurement)", best, best);
+    value("band-peak-d", "the D of that peak (no closed form; stars seen with this D are brightest to the eye)", bd, bd);
+    value("band-back", "the D beyond which the visible band is fainter than at rest again (no closed form; the light has moved to the ultraviolet)", back, back);
+    value("band-0.99", "visible-band brightening straight ahead at 0.99 c, D = sqrt 199 (no closed form)", ab_band_ratio(sqrt(199.0), SV_SUN), ab_band_ratio(sqrt(199.0), SV_SUN));
+    Series s[] = {{"visible band, 5800 K", ya, "#56b4e9"}, {"bolometric D^2", yb, "#cc79a7"}, {"log10(D T / 10000 K)", yc, "#e69f00"}};
+    plot("colour.svg", "A 5800 K star seen with Doppler factor D", "log10 D", "log10", n, s, 3);
+}
+
+/* S37: the browser adapter. */
+static void val_sky_adapter(void)
+{
+    sv_reset(0.9);
+    value("adapter-sky-d", "SV_D_AHEAD at 0.9 c (theory sqrt 19)", sv_value(SV_D_AHEAD), sqrt(19.0));
+    value("adapter-sky-cone", "SV_HALF_CONE at 0.9 c [rad] (theory acos 0.9)", sv_value(SV_HALF_CONE), acos(0.9));
+    value("adapter-sky-curve", "sv_curve(90, SV_C_THETA_SHIP) at 0.9 c [deg] (theory acos 0.9 in degrees)", sv_curve(90, SV_C_THETA_SHIP), acos(0.9) * 180.0 / PI6);
+    sv_reset(0.0);
+    value("adapter-sky-rest", "stars ahead at rest out of 600 (theory 300, one random sky)", sv_value(SV_FORWARD), 300.0);
+}
+
 int main(int argc, char **argv)
 {
     snprintf(dir, sizeof dir, "%s", argc > 1 ? argv[1] : "docs/theory/figures");
     values = fopen(path("values.md"), "w");
     if (!values) { fprintf(stderr, "cannot write %s/values.md\n", dir); return 1; }
     fprintf(values, "# Measured values\n\nWritten by `make theory-figs` (tests/theory_figs.c) from the program's own functions. Do not edit by hand.\n"
-                    "Units: c = 1, times in years, lengths in light-years; on page 5 G = c = M = 1, lengths and times in M. The last column is the relative error; where the theory column is 0 it is the absolute value.\n\n"
+                    "Units: c = 1, times in years, lengths in light-years; on page 5 G = c = M = 1, lengths and times in M; on page 6 angles in degrees, temperatures in K and brightness as a ratio to the star at rest. The last column is the relative error; where the theory column is 0 it is the absolute value.\n\n"
                     "| id | what is measured | measured | theory | error |\n|---|---|---|---|---|\n");
     fig_boost();
     fig_rapidity();
@@ -745,6 +943,13 @@ int main(int argc, char **argv)
     fig_geo_order();
     fig_geo_newton();
     val_geo_adapter();
+    fig_aberration();
+    fig_aberration_rapidity();
+    fig_doppler();
+    fig_star_density();
+    fig_brightness();
+    fig_colour();
+    val_sky_adapter();
     fclose(values);
     return 0;
 }
