@@ -11,3 +11,4 @@ theory_figs
 test_courier
 story_bench
 .story-check/
+test_schwarzschild

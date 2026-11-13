@@ -69,3 +69,50 @@ int svg_plot(const char *path, const char *title, const char *xlabel, const char
     fprintf(fp, "</svg>\n");
     return fclose(fp) == 0 ? 0 : -1;
 }
+
+int svg_xy(const char *path, const char *title, const char *unit, double extent,
+           const XYSeries *series, int nseries, const Ring *rings, int nrings)
+{
+    const int ml = 60, mt = 44, plot = 440, w = ml + plot + 200, h = mt + plot + 50;
+    if (!(extent > 0.0) || nseries < 0 || nrings < 0) return -1;
+    FILE *fp = fopen(path, "w");
+    if (!fp) return -1;
+    double k = plot / (2.0 * extent);
+    double cx = ml + plot / 2.0, cy = mt + plot / 2.0;
+    fprintf(fp, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 %d %d\" width=\"%d\" height=\"%d\" "
+                "font-family=\"sans-serif\" font-size=\"12\">\n", w, h, w, h);
+    fprintf(fp, "<rect width=\"%d\" height=\"%d\" fill=\"#ffffff\"/>\n", w, h);
+    fprintf(fp, "<text x=\"%d\" y=\"26\" font-size=\"16\" font-weight=\"bold\" fill=\"#222\">%s</text>\n", ml, title);
+    fprintf(fp, "<clipPath id=\"frame\"><rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/></clipPath>\n", ml, mt, plot, plot);
+    for (int i = 0; i <= 4; i++) {
+        double v = -extent + i * extent / 2.0, p = ml + i * plot / 4.0, q = mt + plot - i * plot / 4.0;
+        fprintf(fp, "<line x1=\"%.1f\" y1=\"%d\" x2=\"%.1f\" y2=\"%d\" stroke=\"#e3e3e3\"/>\n", p, mt, p, mt + plot);
+        fprintf(fp, "<line x1=\"%d\" y1=\"%.1f\" x2=\"%d\" y2=\"%.1f\" stroke=\"#e3e3e3\"/>\n", ml, q, ml + plot, q);
+        fprintf(fp, "<text x=\"%.1f\" y=\"%d\" text-anchor=\"middle\" fill=\"#444\">%.3g</text>\n", p, mt + plot + 18, v);
+        fprintf(fp, "<text x=\"%d\" y=\"%.1f\" text-anchor=\"end\" fill=\"#444\">%.3g</text>\n", ml - 8, q + 4, v);
+    }
+    fprintf(fp, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"none\" stroke=\"#888\"/>\n", ml, mt, plot, plot);
+    fprintf(fp, "<text x=\"%.0f\" y=\"%d\" text-anchor=\"middle\" fill=\"#222\">x [%s]</text>\n", cx, h - 10, unit);
+    fprintf(fp, "<text transform=\"translate(16 %.0f) rotate(-90)\" text-anchor=\"middle\" fill=\"#222\">y [%s]</text>\n", cy, unit);
+    int row = 0;
+    fprintf(fp, "<g clip-path=\"url(#frame)\">\n");
+    for (int i = 0; i < nrings; i++)
+        fprintf(fp, "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.2f\" fill=\"%s\" stroke=\"%s\" stroke-width=\"1.5\"%s/>\n", cx, cy, rings[i].r * k,
+                rings[i].fill ? rings[i].color : "none", rings[i].color, rings[i].fill ? "" : " stroke-dasharray=\"5 4\"");
+    for (int s = 0; s < nseries; s++) {
+        fprintf(fp, "<polyline fill=\"none\" stroke=\"%s\" stroke-width=\"1.6\"%s points=\"", series[s].color,
+                series[s].dashed ? " stroke-dasharray=\"6 4\"" : "");
+        for (int i = 0; i < series[s].count; i++) fprintf(fp, "%.1f,%.1f ", cx + series[s].x[i] * k, cy - series[s].y[i] * k);
+        fprintf(fp, "\"/>\n");
+    }
+    fprintf(fp, "</g>\n");
+    for (int s = 0; s < nseries; s++, row++)
+        fprintf(fp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"%s\" stroke-width=\"2\"%s/><text x=\"%d\" y=\"%d\" fill=\"#222\">%s</text>\n",
+                ml + plot + 14, mt + 10 + 20 * row, ml + plot + 34, mt + 10 + 20 * row, series[s].color,
+                series[s].dashed ? " stroke-dasharray=\"6 4\"" : "", ml + plot + 40, mt + 14 + 20 * row, series[s].name);
+    for (int i = 0; i < nrings; i++, row++)
+        fprintf(fp, "<circle cx=\"%d\" cy=\"%d\" r=\"6\" fill=\"%s\" stroke=\"%s\"/><text x=\"%d\" y=\"%d\" fill=\"#222\">%s</text>\n",
+                ml + plot + 24, mt + 10 + 20 * row, rings[i].fill ? rings[i].color : "none", rings[i].color, ml + plot + 40, mt + 14 + 20 * row, rings[i].name);
+    fprintf(fp, "</svg>\n");
+    return fclose(fp) == 0 ? 0 : -1;
+}

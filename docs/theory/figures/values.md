@@ -1,7 +1,7 @@
 # Measured values
 
 Written by `make theory-figs` (tests/theory_figs.c) from the program's own functions. Do not edit by hand.
-Units: c = 1, times in years, lengths in light-years. The last column is the relative error; where the theory column is 0 it is the absolute value.
+Units: c = 1, times in years, lengths in light-years; on page 5 G = c = M = 1, lengths and times in M. The last column is the relative error; where the theory column is 0 it is the absolute value.
 
 | id | what is measured | measured | theory | error |
 |---|---|---|---|---|
@@ -70,3 +70,52 @@ Units: c = 1, times in years, lengths in light-years. The last column is the rel
 | `manual-clamp` | steps taken by one call asking for 5000 (theory 400: one call is clamped) | 400 | 400 | 0.00e+00 |
 | `manual-limit` | steps after 30 calls of 400 with no thrust (theory RR_MAX_STEPS 8000) | 8000 | 8000 | 0.00e+00 |
 | `manual-never-arrives` | RR_ARRIVED for a rocket that never left (theory 0) | 0 | 0 | 0.00e+00 |
+| `geo-e` | E of the orbit with periapsis 10 M and apoapsis 30 M, from 2V(10) (theory E^2 = 1 - 2M u1 u2 u3 L^2 from the turning points) | 0.976315261 | 0.976315261 | 0.00e+00 |
+| `geo-l` | its L (theory 1 / sqrt(u1 u2 + u1 u3 + u2 u3), u3 = 1/2M - u1 - u2) | 4.37594974 | 4.37594974 | 0.00e+00 |
+| `geo-e-fd` | largest abs((1 - 2M/r) dt/dtau / E - 1) from finite differences over 3 orbits, step 0.4 (theory 0; the midpoint difference is second order) | 1.13460854e-06 | 0 | 1.13e-06 |
+| `geo-l-fd` | largest abs(r^2 dphi/dtau / L - 1) from the same differences (theory 0) | 9.07696232e-06 | 0 | 9.08e-06 |
+| `geo-energy-100` | largest abs(H / H0 - 1) over 160000 steps (about 100 orbits) of 0.4 (theory 0; bounded, it does not grow) | 1.26574307e-11 | 0 | 1.27e-11 |
+| `potential-force` | largest relative gap between geo_force and -dV/dr by central differences, 3 kinds, r = 2.5..60 (theory 0, up to the difference error) | 1.80163597e-08 | 0 | 1.80e-08 |
+| `potential-extra` | 2V_GR - (1 + 2V_Newton) at r = 9, L = 4 (theory -2 M L^2 / r^3) | -0.0438957476 | -0.0438957476 | 1.11e-15 |
+| `potential-level` | E^2 of the browser's default start (r0 = 20, L = 4.2, at rest radially) (theory 2V(20)) | 0.93969 | 0.93969 | 0.00e+00 |
+| `circular-l` | L of the circular orbit at 10 M (theory sqrt(M r^2 / (r - 3M)) = sqrt(100/7)) | 3.77964473 | 3.77964473 | 0.00e+00 |
+| `circular-radius` | geo_circular_radius(L) for that L [M] (theory 10) | 10 | 10 | 2.22e-16 |
+| `circular-stays` | largest abs(r - 10) over 10 orbits integrated from the circle (theory 0) | 0 | 0 | 0.00e+00 |
+| `circular-kepler` | dphi/dt measured over 10 orbits at 10 M (theory sqrt(M / r^3), Kepler's law in far-away time) | 0.0316227766 | 0.0316227766 | 1.80e-13 |
+| `circular-energy` | E of that orbit (theory (1 - 2M/r) / sqrt(1 - 3M/r)) | 0.956182887 | 0.956182887 | 0.00e+00 |
+| `isco-scan` | radius of the least angular momentum among circular orbits, scanned in steps of 1e-4 M (theory 6M) | 6 | 6 | 4.29e-13 |
+| `isco-l` | that least L [M] (theory sqrt 12) | 3.46410162 | 3.46410162 | 0.00e+00 |
+| `isco-flat` | V''(6M) at L^2 = 12 by central differences (theory 0: the minimum and the maximum merge) | -5.14406226e-10 | 0 | 5.14e-10 |
+| `isco-outside` | width max r - min r of the circle at 7M nudged by dr/dtau = 0.01, over 1200 M [M] (theory 2 x 0.01 / sqrt(V''(7)), small oscillation) | 0.744015291 | 0.740810412 | 4.33e-03 |
+| `isco-inside` | state of the circle at 5M nudged inward by 0.001 after 1200 M (theory 1: fell in) | 1 | 1 | 0.00e+00 |
+| `photon-peak` | radius where the light potential peaks, scanned in steps of 1e-5 M (theory 3M) | 3 | 3 | 1.97e-12 |
+| `photon-bcrit` | 1 / sqrt(2V) at that peak (theory 3 sqrt 3 M = 5.196) | 5.19615242 | 5.19615242 | 0.00e+00 |
+| `light-below` | state of light with b = 0.999 b_c (theory 1: captured) | 1 | 1 | 0.00e+00 |
+| `light-above` | angle swept by light with b = 1.001 b_c from 40M and back out [rad] (theory column 2 pi: it winds more than once round) | 9.39148745 | 6.28318531 | 4.95e-01 |
+| `deflection-1000` | deflection of light passing at b = 1000 M [rad] (theory 4M/b, plus (15 pi / 4)(M/b)^2 = 1.18e-5) | 0.00401182382 | 0.004 | 2.96e-03 |
+| `deflection-1000-two` | the same against 4M/b + (15 pi / 4)(M/b)^2 | 0.00401182382 | 0.00401178097 | 1.07e-05 |
+| `deflection-6` | deflection at b = 6 M, close to the photon sphere [rad] (4M/b = 0.667 is far off) | 1.71938831 | 0.666666667 | 1.58e+00 |
+| `deflection-sun` | deflection by the Sun at its rim, M = 1476.6 m, b = 6.957e8 m [arcsec] (theory 1.75) | 1.75119028 | 1.75 | 6.80e-04 |
+| `deflection-quadrature` | largest gap between the integrated sweep (step 0.004 b, linear crossing) and the quadrature, b = 8..400 M [rad] (theory 0) | 1.31754607e-10 | 0 | 1.32e-10 |
+| `precession-integrated` | largest gap between the integrated turn and the elliptic integral, periapsis 8..4000 M [rad] (theory 0) | 3.23066018e-11 | 0 | 3.23e-11 |
+| `precession-10-30` | turn per orbit between 10 M and 30 M, quadrature [rad] (theory the elliptic integral) | 1.84727666 | 1.84727666 | 6.68e-12 |
+| `precession-weak-10-30` | the weak-field formula for that orbit [rad] (a = 20, e = 0.5): strong field, 32% short | 1.25663706 | 1.84727666 | 3.20e-01 |
+| `precession-first-order` | (turn / weak - 1) p at p = 1.33e5 M (theory (18 + e^2)/4 = 4.528) | 4.52794915 | 4.52777778 | 3.78e-05 |
+| `precession-mercury` | Mercury: weak-field turn per century [arcsec] (M_sun = 1476.6 m, a = 5.79e10 m, e = 0.2056; theory 42.98) | 42.9807117 | 42.98 | 1.66e-05 |
+| `clock-split` | largest gap between the integrated rate dtau/dt on circular orbits (one lap, r = 3.2..40) and sqrt(1 - 2M/r) / gamma(v_local) (theory 0) | 6.20614671e-14 | 0 | 6.21e-14 |
+| `clock-static-6` | a clock held at 6M against the far-away clock (theory sqrt(2/3)) | 0.816496581 | 0.816496581 | 0.00e+00 |
+| `clock-orbit-6` | a clock on the circular orbit at 6M (theory sqrt(1/2)) | 0.707106781 | 0.707106781 | 0.00e+00 |
+| `clock-local-6` | speed of that orbit measured by a static observer at 6M (theory 1/2) | 0.5 | 0.5 | 0.00e+00 |
+| `clock-earth` | a clock on the ground against one far away: 1 - rate, M = 4.435e-3 m, r = 6.371e6 m (theory 6.96e-10) | 6.96123048e-10 | 6.96e-10 | 1.77e-04 |
+| `fall-3` | proper time of a fall from rest at 10M down to 3M (theory the cycloid sqrt(R^3/2M)(sqrt(q(1-q)) + acos sqrt q)) | 32.4098858 | 32.4098858 | 2.55e-10 |
+| `fall-horizon` | proper time when the fall reaches 2.002M and stops (theory just under the time to 2M) | 33.6993512 | 33.7008699 | 4.51e-05 |
+| `fall-rate` | dt/dtau at the stop (grows without bound towards 2M; theory E / (1 - 2M/r)) | 1318.13752 | 1318.13752 | 0.00e+00 |
+| `order-fourth` | slope of log error against log step, fourth-order composition (theory 4) | 3.99748103 | 4 | 6.30e-04 |
+| `order-second` | the same for the plain leapfrog at equal cost (theory 2) | 2.00110193 | 2 | 5.51e-04 |
+| `newton-closes` | Newton's orbit from the same apsides: turn after one orbit [rad] (theory 0) | 2.56594745e-12 | 0 | 2.57e-12 |
+| `newton-period` | its period between periapses (theory 2 pi a^1.5 with a = 40) | 1589.53412 | 1589.53412 | 1.35e-12 |
+| `newton-limit` | far-away period of the relativistic orbit over Kepler's, periapsis 40960 M (theory 1 + O(M/r)) | 1.00003662 | 1 | 3.66e-05 |
+| `adapter-precession` | measured turn per lap after 200000 steps from r0 = 20, L = 4.2 [rad] (theory the elliptic integral) | 2.12709401 | 2.12709401 | 8.98e-10 |
+| `adapter-drift` | largest abs(H / H0 - 1) over those steps (theory 0) | 2.22066809e-12 | 0 | 2.22e-12 |
+| `adapter-deflection` | light b = 6: angle gained inside 30 M over the straight line, integrated [rad] (theory the quadrature) | 1.71952688 | 1.71952702 | 8.13e-08 |
+| `adapter-plunge` | state of r0 = 40, L = 3.2 < sqrt 12 (theory 1: captured), while Newton's orbit stays | 1 | 1 | 0.00e+00 |

@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "gif.h"
+#include "orbit.h"
 #include "relativity.h"
 #include "render.h"
 #include "svg.h"
@@ -102,6 +103,26 @@ static int gif_demo(const char *path)
     return 0;
 }
 
+/* A particle released at 20 M with L = 4.2 M around a black hole: the precessing orbit, Newton's ellipse from the
+ * same start, the horizon, the photon sphere and the innermost stable circular orbit, as docs/orbit.svg. */
+static int orbit_svg(const char *dir)
+{
+    enum { ORBITS = 5 };
+    static float gx[SO_TRAIL_MAX], gy[SO_TRAIL_MAX], nx[SO_TRAIL_MAX], ny[SO_TRAIL_MAX];
+    so_reset(0, 20.0, 4.2);
+    while (so_value(SO_APSES) < ORBITS && so_value(SO_STATE) == SO_MOVING) so_step(1);
+    int n = (int)so_value(SO_TRAIL);
+    for (int i = 0; i < n; i++) { gx[i] = (float)so_trail_x(i); gy[i] = (float)so_trail_y(i); nx[i] = (float)so_ntrail_x(i); ny[i] = (float)so_ntrail_y(i); }
+    XYSeries s[] = {{"general relativity", gx, gy, n, "#e69f00", 0}, {"Newton, same start", nx, ny, n, "#0072b2", 1}};
+    Ring rings[] = {{"horizon 2M", 2.0, "#111111", 1}, {"photon sphere 3M", 3.0, "#cc79a7", 0}, {"innermost stable 6M", 6.0, "#009e73", 0}};
+    char path[512];
+    snprintf(path, sizeof path, "%s/orbit.svg", dir);
+    if (svg_xy(path, "Orbit around a black hole: r0 = 20 M, L = 4.2 M (5 turns)", "M", 22.0, s, 2, rings, 3)) return 1;
+    printf("%d periapses: the orbit turns %.6f rad per lap (elliptic integral %.6f, weak-field 6 pi M / p %.6f)\n",
+           (int)so_value(SO_APSES), so_value(SO_PREC), so_value(SO_PREC_EXACT), so_value(SO_PREC_WEAK));
+    return 0;
+}
+
 static struct termios saved;
 static void restore(void) { tcsetattr(STDIN_FILENO, TCSANOW, &saved); fputs("\033[?25h", stdout); }
 
@@ -157,6 +178,7 @@ int main(int argc, char **argv)
 {
     if (argc > 1 && strcmp(argv[1], "--headless") == 0) return headless(argc > 2 ? argv[2] : ".");
     if (argc > 1 && strcmp(argv[1], "--snapshot") == 0) return snapshot();
+    if (argc > 1 && strcmp(argv[1], "--orbit") == 0) return orbit_svg(argc > 2 ? argv[2] : ".");
     if (argc > 1 && strcmp(argv[1], "--gif") == 0) return gif_demo(argc > 2 ? argv[2] : "demo.gif");
     return play();
 }

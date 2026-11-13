@@ -82,6 +82,52 @@
       <canvas id="plot" width="1080" height="230" role="img" aria-label="Earth time and ship time in years against the number of engine steps"></canvas>
       <p id="plot-note">Horizontal axis: ship time τ in years. While the rocket is at rest the two lines run together; at speed Earth's clock pulls ahead by the factor γ.</p></div>
   </section>
+  <section id="black-hole" class="orbits" aria-label="Orbits around a black hole">
+    <div class="orbit-intro"><p class="eyebrow">02 / BEYOND THE ROCKET</p><h2>Orbit a black hole.</h2>
+      <p>General relativity around a mass M (G = c = 1: lengths and times in units of M; for the Sun M = 1.48 km). The same C, compiled to WebAssembly, integrates the geodesic with a fourth-order symplectic step. The orbit turns a little every lap, light bends and can be captured, and no circular orbit survives inside 6 M.</p></div>
+    <div class="layout orbit-layout">
+      <section class="panel" aria-label="Orbital plane and effective potential">
+        <div class="view-heading"><span><i class="live-dot" aria-hidden="true"></i> <span id="bh-mode">PARTICLE</span></span><span id="bh-clock">τ = 0 M</span></div>
+        <div class="orbit-view"><canvas id="bh-orbit" role="img" aria-label="Orbital plane seen from above: the hole (black disc, radius 2M), the photon sphere at 3M (dashed pink), the innermost stable circular orbit at 6M (dashed green), the computed relativistic orbit (orange) and Newton's orbit from the same start (dashed blue)."></canvas>
+          <div class="scene-label"><span id="bh-status" role="status">Loading…</span><small>Lines are computed geodesics, not pictures</small></div></div>
+        <div class="legend" aria-label="Legend of the orbit">
+          <span><i class="key world"></i> general relativity (computed)</span>
+          <span><i class="key newton"></i> Newton / straight line, same start</span>
+          <span><i class="key hole"></i> horizon 2M</span>
+          <span><i class="key photon"></i> photon sphere 3M</span>
+          <span><i class="key isco"></i> innermost stable orbit 6M</span>
+          <span><i class="key apsis"></i> periapsis passages</span>
+        </div>
+        <canvas id="bh-potential" role="img" aria-label="Effective potential 2V against r in units of M: relativistic (orange), Newtonian (dashed blue), the level E squared (yellow) and the body's radius (dot)."></canvas>
+        <div class="legend" aria-label="Legend of the potential">
+          <span><i class="key world"></i> 2V(r), relativity</span><span><i class="key newton"></i> Newton</span><span><i class="key level"></i> E²: the body moves where 2V ≤ E²</span>
+        </div>
+        <div class="telemetry bh-telemetry" aria-label="Orbit readouts">
+          <div><span>RADIUS r</span><strong id="bh-r">—</strong><small>M</small></div>
+          <div><span id="bh-k1">TURN PER LAP (MEASURED)</span><strong id="bh-v1">—</strong><small>°</small></div>
+          <div><span id="bh-k2">ELLIPTIC INTEGRAL · 6πM/p</span><strong id="bh-v2">—</strong><small>°</small></div>
+          <div><span id="bh-k3">CLOCK dτ/dt · AT REST</span><strong id="bh-v3">—</strong></div>
+        </div>
+        <p class="bh-laps" id="bh-laps"></p>
+      </section>
+      <aside class="control-panel bh-controls" aria-label="Black-hole experiment controls">
+        <p class="eyebrow">THE EXPERIMENT</p><h2>Release a particle,<br>or send light.</h2>
+        <div class="bh-kind" role="group" aria-label="What to release"><button id="bh-particle" type="button" aria-pressed="true">Particle</button><button id="bh-light" type="button" aria-pressed="false">Light</button></div>
+        <label id="bh-r0-row" for="bh-r0"><span>Start radius r₀</span><output id="bh-r0-out">20.0 M</output></label>
+        <input id="bh-r0" type="range" min="7" max="40" step="0.5" value="20">
+        <label for="bh-l"><span id="bh-l-name">Angular momentum L</span><output id="bh-l-out">4.20 M</output></label>
+        <input id="bh-l" type="range" min="3" max="6" step="0.01" value="4.2">
+        <div class="bh-run"><button id="bh-launch" class="primary" type="button">Launch <span aria-hidden="true">→</span></button><button id="bh-freeze" type="button">Freeze</button></div>
+        <div class="experiment"><p class="eyebrow">OR TRY</p>
+          <button id="bh-rosette" type="button">A precessing orbit <span aria-hidden="true">→</span></button>
+          <button id="bh-isco" type="button">Near the innermost stable orbit <span aria-hidden="true">→</span></button>
+          <button id="bh-plunge" type="button">Too little angular momentum <span aria-hidden="true">→</span></button>
+          <button id="bh-graze" type="button">Light grazing the photon sphere <span aria-hidden="true">→</span></button>
+          <button id="bh-capture" type="button">Light captured <span aria-hidden="true">→</span></button>
+          <p id="bh-note">Released at rest radially at r₀ with angular momentum L.</p></div>
+      </aside>
+    </div>
+  </section>
   <section id="field-notes" class="field-notes"><p class="eyebrow">FIELD NOTES</p>
     <div><h2>Same distance, less time on board.</h2><p>At a constant 1 g the rocket reaches the half-way point at 0.95 c. The full flip-and-burn trip takes 3.53 years on Vela's clock and 5.82 years on Oren's. The worldline never leaves the light cone: nothing here goes faster than light.</p></div>
     <div><h3>The same model as the terminal game</h3><p>Each step advances the ship clock by 0.0044 yr with the exact closed form of hyperbolic motion (units c = 1, years and light-years), in C compiled to WebAssembly. JavaScript only draws and reads inputs. The paintings and the two foxes are illustrations; their markers sit on computed events.</p></div>
