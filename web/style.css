@@ -140,3 +140,11 @@ body{font-size:16px}
 .bh-controls input[type=range]{min-height:44px}
 .bh-run button,.bh-kind button,.bh-controls .experiment button{min-height:46px}
 }
+/* The view from the window (M3). */
+.sky-wrap{display:flex;flex-direction:column-reverse}.sky-wrap .scene-label{position:static;max-width:none;border:0;border-radius:0;border-bottom:1px solid var(--line);background:#10142c}
+#sky-view{display:block;width:100%;aspect-ratio:1080/560}
+#sky-curves{display:block;width:100%;aspect-ratio:1080/300;margin-top:10px}
+.key.ring30{border-top:1px solid #ffffff66}.key.photon-solid{border-color:var(--now)}
+.sky-presets{grid-template-columns:repeat(3,1fr);margin-top:12px}
+.sky-presets button{padding:10px 6px}
+@media(max-width:720px){#sky-view{aspect-ratio:0.52}#sky-curves{aspect-ratio:0.9}}

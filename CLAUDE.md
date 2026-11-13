@@ -7,14 +7,14 @@ C11 + libm の 1+1 次元特殊相対論シミュレータ。物理の正典は 
 - ブラウザーの 1 ステップは固有時 half_tau / 400 ≈ 0.0044 yr。JavaScript は描画と入力だけで、位置・時計・速度・世界線は C で計算する。
   時空図の「ロケットの今」の線(t − t0 = v (x − x0))だけは C の v から JS で引く幾何の補助線。
 - 原画の背景と 2 人の狐(ロケットの Vela・地球に残る Oren)は装飾。肖像の目印は C が計算した事象(現在の (x, t) と、地球系で同時刻の地球)に置くだけ(画面と README に明記)。
-- 乱数・保存・サーバー API は無い。既存の出力(CSV/SVG/GIF)と物理モデルを保持する。
+- 乱数(M3 の星図の固定 seed を除く)・保存・サーバー API は無い。既存の出力(CSV/SVG/GIF)と物理モデルを保持する。
 - 検証は `make test`(解析解・保存則の照合 + adapter)/ `make bench`(native trace)/ `make plots` / `make web` / `make smoke`。
   native の cc が無い端末では、gcc の入ったコンテナで `make -j4 test bench relativity-rider` を実行して native を作り
   (例: `docker run --rm -u $(id -u):$(id -g) -v $PWD:/src -w /src <gcc の入ったイメージ> make -j4 test bench relativity-rider`)、
   Emscripten を有効にして `make web && node scripts/smoke.cjs` を手元で回す。
 - 理論の手引きは `docs/theory/`。`make theory-figs` が図と実測値の表を `tests/theory_figs.c` から再生成し、`make theory-check` が
   対応表(文 → 頁 → 図 → 関数 → テスト)の欠け・リンク切れ・消えた関数名・未掲載の公開関数で落ちる。法則・規則を足したら同じ PR で頁と図と表を足す。
-  README の「30 statements」は表の行数と合わせる。
+  README の「37 statements」は表の行数と合わせる。
 - スマホ(幅 720px 以下・高さ 500px 以下・タッチ主体)では DOM と canvas の全文字を 14 CSS px 以上、操作を 44 CSS px 以上にし、噴射ボタンは時空図の横に固定する。`make smoke` が 390×844 と 844×390 で実測する。`window.__tmGate` は読み取り専用。
 - CI は PR の軽量ゲート(docker build で `make test && make plots`)のみ。WASM ビルド・撮影・E2E はローカル専用。
 - 公開 repo。コミット・PR に生成 AI の署名、私的な情報を入れない(公開前に private 情報の検査と差分の目視を行う)。
@@ -25,6 +25,11 @@ C11 + libm の 1+1 次元特殊相対論シミュレータ。物理の正典は 
 - `src/schwarzschild.c` が Schwarzschild 時空の測地線(質点・光、比較用のニュートン)を幾何単位 G = c = M = 1 で積分する(Yoshida の 4 次シンプレクティック合成、地平面 2M(1 + 1e-3) で停止)。特殊相対論のモデル `src/relativity.c` とその出力・物語は変えない。
 - `src/orbit.c` がブラウザーの「Orbit a black hole」と端末の `--orbit`(docs/orbit.svg)の adapter。JS(`web/orbits.mjs`)は描画と入力だけ。
 - `tests/test_schwarzschild.c` が閉形式(円軌道・ISCO 6M・光子球 3M・b_c・楕円積分の近日点移動・4M/b・自由落下)と収束次数を照合し、`--trace` を smoke が WASM と比べる。理論は `docs/theory/05-schwarzschild.md`(S19–S30)。
+
+## M3 の窓からの眺め(光行差・ドップラー)
+
+- `src/aberration.c` が光行差・ドップラー因子 D・立体角 1/D²・明るさ(I_ν/ν³ 不変、点の星の流束は D²)・黒体の色温度 D T と可視域の流束の正典。`src/skyview.c` が固定の星図 600 個(SV_SEED の splitmix64、位置と色・等級は別の種。β に依らない)に当てるブラウザーの「The view from the window」と端末の `--sky`(docs/sky.svg)の adapter。JS(`web/sky.mjs`)は描画と入力だけ。
+- `tests/test_aberration.c` が既知の値・往復・速度の合成・Lorentz 変換との照合・立体角と星の数・D の冪・Wien・色・adapter を照合し、`--trace` を smoke が WASM と比べる。理論は `docs/theory/06-aberration.md`(S31–S37)。物語の層とその JSON は変えない。
 
 ## M5 の物語の層「The Long Echo」
 

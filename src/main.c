@@ -11,6 +11,7 @@
 #include "orbit.h"
 #include "relativity.h"
 #include "render.h"
+#include "skyview.h"
 #include "svg.h"
 
 #define DEST 4.2
@@ -123,6 +124,46 @@ static int orbit_svg(const char *dir)
     return 0;
 }
 
+/* The whole sky at rest and from a ship at 0.9 c (docs/sky.svg): every catalogue star placed, coloured and sized by
+ * the C model, on discs centred on the direction of motion (radius = angle from it / 180 deg). */
+static int sky_svg(const char *dir)
+{
+    const double betas[2] = {0.0, 0.9};
+    const int R = 200, top = 70, gap = 70, w = 2 * (2 * R) + 3 * gap, h = top + 2 * R + 110;
+    char path[512];
+    snprintf(path, sizeof path, "%s/sky.svg", dir);
+    FILE *fp = fopen(path, "w");
+    if (!fp) return 1;
+    fprintf(fp, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 %d %d\" width=\"%d\" height=\"%d\" font-family=\"sans-serif\" font-size=\"13\">\n", w, h, w, h);
+    fprintf(fp, "<rect width=\"%d\" height=\"%d\" fill=\"#ffffff\"/>\n", w, h);
+    fprintf(fp, "<text x=\"%d\" y=\"28\" font-size=\"17\" font-weight=\"bold\" fill=\"#222\">The whole sky seen from the ship: at rest and at 0.9 c (600 catalogue stars)</text>\n", gap);
+    for (int p = 0; p < 2; p++) {
+        sv_reset(betas[p]);
+        double cx = gap + R + p * (2 * R + gap), cy = top + R;
+        fprintf(fp, "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%d\" fill=\"#0b0e20\"/>\n", cx, cy, R);
+        for (int deg = 30; deg < 180; deg += 30)
+            fprintf(fp, "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"none\" stroke=\"#ffffff30\"/>\n", cx, cy, R * deg / 180.0);
+        for (int i = 0; i < SV_STARS_MAX; i++) {
+            double f = sv_star(i, SV_STAR_FLUX_SHIP), size = 0.8 + 1.1 * fmax(0.0, log10(f) + 2.5);
+            fprintf(fp, "<circle cx=\"%.2f\" cy=\"%.2f\" r=\"%.2f\" fill=\"rgb(%d,%d,%d)\"/>\n", cx + R * sv_star(i, SV_X), cy - R * sv_star(i, SV_Y),
+                    fmin(size, 7.0), (int)(255 * sv_star(i, SV_R)), (int)(255 * sv_star(i, SV_G)), (int)(255 * sv_star(i, SV_B)));
+        }
+        if (p) fprintf(fp, "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\" fill=\"none\" stroke=\"#f0e442\" stroke-width=\"2\" stroke-dasharray=\"6 4\"/>\n",
+                       cx, cy, R * sv_value(SV_HALF_CONE) / 3.14159265358979323846);
+        fprintf(fp, "<text x=\"%.1f\" y=\"%d\" text-anchor=\"middle\" font-weight=\"bold\" fill=\"#222\">%s</text>\n", cx, top + 2 * R + 26,
+                p ? "beta = 0.9: stars crowd ahead, bluer; behind, sparse and red" : "beta = 0: the sky at rest");
+        fprintf(fp, "<text x=\"%.1f\" y=\"%d\" text-anchor=\"middle\" fill=\"#444\">ahead %d of 600 stars (expected %.0f)%s</text>\n", cx, top + 2 * R + 48,
+                (int)sv_value(SV_FORWARD), sv_value(SV_FORWARD_EXPECTED), p ? "; dashed ring: half of all stars" : "");
+    }
+    fprintf(fp, "<text x=\"%d\" y=\"%d\" fill=\"#444\">Centre: the direction of motion; rim: straight behind; rings every 30 deg. Dot size: visible-band flux; colour: the black body at D T.</text>\n", gap, h - 18);
+    fprintf(fp, "</svg>\n");
+    if (fclose(fp)) return 1;
+    sv_reset(0.9);
+    printf("at 0.9 c: %d of %d stars ahead (expected %.1f); half of them inside %.2f deg; D ahead %.4f, behind %.4f\n", (int)sv_value(SV_FORWARD), SV_STARS_MAX,
+           sv_value(SV_FORWARD_EXPECTED), sv_value(SV_HALF_CONE) * 180.0 / 3.14159265358979323846, sv_value(SV_D_AHEAD), sv_value(SV_D_BEHIND));
+    return 0;
+}
+
 static struct termios saved;
 static void restore(void) { tcsetattr(STDIN_FILENO, TCSANOW, &saved); fputs("\033[?25h", stdout); }
 
@@ -178,6 +219,7 @@ int main(int argc, char **argv)
 {
     if (argc > 1 && strcmp(argv[1], "--headless") == 0) return headless(argc > 2 ? argv[2] : ".");
     if (argc > 1 && strcmp(argv[1], "--snapshot") == 0) return snapshot();
+    if (argc > 1 && strcmp(argv[1], "--sky") == 0) return sky_svg(argc > 2 ? argv[2] : ".");
     if (argc > 1 && strcmp(argv[1], "--orbit") == 0) return orbit_svg(argc > 2 ? argv[2] : ".");
     if (argc > 1 && strcmp(argv[1], "--gif") == 0) return gif_demo(argc > 2 ? argv[2] : "demo.gif");
     return play();

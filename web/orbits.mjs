@@ -15,7 +15,7 @@ const PRESETS = {
 };
 
 export function startOrbits(engine, textPx) {
-  let state, curve = [], ncurve = [], trail = [], ntrail = [], apses = [], paused = true, last = 0, acc = 0, texts = [], preset = 'rosette';
+  let labelInfo = null, state, curve = [], ncurve = [], trail = [], ntrail = [], apses = [], paused = true, last = 0, acc = 0, texts = [], preset = 'rosette';
   let kind = 0, r0 = 20, L = 4.2;
   const read = () => Object.fromEntries(FIELDS.map((name, i) => [name, engine._so_value(i)]));
   function pull() {
@@ -73,14 +73,13 @@ export function startOrbits(engine, textPx) {
     const X = x => cx + x * k, Y = y => cy - y * k;
     ctx.fillStyle = '#0b0e20'; ctx.fillRect(0, 0, w, h);
     ctx.font = `${label}px system-ui`; ctx.textBaseline = 'middle';
-    // Distance rings every 10 M (5 M for small views), labelled on the right.
+    // Distance rings every 10 M (5 M for small views). Their labels are drawn last, on a backing box, along the
+    // direction farthest from every periapsis tick (so no tick crosses a label).
     let stepR = 5;
     while (stepR * k < 3.4 * label) stepR *= 2;
-    ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.fillStyle = '#8f98b8'; ctx.textAlign = 'left';
-    for (let r = stepR; r < view; r += stepR) {
-      ctx.beginPath(); ctx.arc(cx, cy, r * k, 0, 2 * Math.PI); ctx.stroke();
-      if (cx + r * k + 40 < w) ctx.fillText(`${r} M`, cx + r * k + 4, cy - label * 0.6);
-    }
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+    const rings = [];
+    for (let r = stepR; r < view; r += stepR) { ctx.beginPath(); ctx.arc(cx, cy, r * k, 0, 2 * Math.PI); ctx.stroke(); rings.push(r); }
     const ring = (r, colour, dash) => { ctx.strokeStyle = colour; ctx.setLineDash(dash); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, r * k, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]); };
     ring(state.isco, C.isco, [5, 4]); ring(state.photon, C.photon, [3, 3]);
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(cx, cy, Math.max(2, 2 * state.M * k), 0, 2 * Math.PI); ctx.fill();
@@ -93,13 +92,50 @@ export function startOrbits(engine, textPx) {
     path(ntrail, C.newton, [6, 5], 1.6);
     path(trail, C.gr, [], 2.2);
     // Periapsis marks: a short tick at each measured periapsis direction, at r_p.
+    const ticks = [];
     if (state.kind === 0 && state.rp > 0) {
       ctx.strokeStyle = '#ffffffb0'; ctx.lineWidth = 1.5;
-      for (const a of apses) { const c = Math.cos(a), s = Math.sin(a); ctx.beginPath(); ctx.moveTo(X(c * (state.rp - 1.2)), Y(s * (state.rp - 1.2))); ctx.lineTo(X(c * (state.rp + 1.2)), Y(s * (state.rp + 1.2))); ctx.stroke(); }
+      for (const a of apses) {
+        const c = Math.cos(a), s = Math.sin(a), seg = [X(c * (state.rp - 1.2)), Y(s * (state.rp - 1.2)), X(c * (state.rp + 1.2)), Y(s * (state.rp + 1.2))];
+        ctx.beginPath(); ctx.moveTo(seg[0], seg[1]); ctx.lineTo(seg[2], seg[3]); ctx.stroke(); ticks.push(seg);
+      }
     }
     const dot = (x, y, colour) => { ctx.fillStyle = colour; ctx.beginPath(); ctx.arc(X(x), Y(y), 5, 0, 2 * Math.PI); ctx.fill(); };
     if (state.nstate !== 1 && Math.hypot(state.nx, state.ny) < 1.5 * view) dot(state.nx, state.ny, C.newton);
     if (state.state !== 1) dot(state.x, state.y, C.gr);
+    // Ring labels: try directions round the hole and keep the one whose label boxes stay inside the canvas and farthest
+    // (in angle) from every periapsis direction; a box crossed by no tick is required, the backing box only tidies.
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const boxes = angle => rings.map(r => {
+      const text = `${r} M`, tw = ctx.measureText(text).width, x = cx + r * k * Math.cos(angle) + 4, y = cy - r * k * Math.sin(angle);
+      return {text, x: x - 2, y: y - label * 0.65, w: tw + 4, h: label * 1.3};
+    });
+    const inside = b => b.x >= 0 && b.y >= 0 && b.x + b.w <= w && b.y + b.h <= h - label - 10;
+    const crosses = (b, [x0, y0, x1, y1]) => {
+      // segment against rectangle: either end inside, or the segment meets one of the four edges
+      const inRect = (x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+      if (inRect(x0, y0) || inRect(x1, y1)) return true;
+      const meet = (ax, ay, bx, by) => {
+        const d = (x1 - x0) * (by - ay) - (y1 - y0) * (bx - ax);
+        if (!d) return false;
+        const t = ((ax - x0) * (by - ay) - (ay - y0) * (bx - ax)) / d, u = ((ax - x0) * (y1 - y0) - (ay - y0) * (x1 - x0)) / d;
+        return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+      };
+      return meet(b.x, b.y, b.x + b.w, b.y) || meet(b.x, b.y + b.h, b.x + b.w, b.y + b.h) || meet(b.x, b.y, b.x, b.y + b.h) || meet(b.x + b.w, b.y, b.x + b.w, b.y + b.h);
+    };
+    const gap = angle => apses.reduce((m, a) => Math.min(m, Math.abs(Math.atan2(Math.sin(a - angle), Math.cos(a - angle)))), Math.PI);
+    let best = null;
+    for (let deg = 0; deg < 360; deg += 15) {
+      const angle = deg / DEG, list = boxes(angle), hits = list.reduce((n, b) => n + ticks.filter(t => crosses(b, t)).length, 0);
+      const score = [list.every(inside) ? 0 : 1, hits, -gap(angle), Math.abs(Math.sin(angle - Math.PI / 12))];
+      const better = !best || (() => { for (let i = 0; i < score.length; i++) if (score[i] !== best.score[i]) return score[i] < best.score[i]; return false; })();
+      if (better) best = {angle, list, hits, score};
+    }
+    for (const b of best.list) {
+      ctx.fillStyle = '#0b0e20d0'; ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = '#8f98b8'; ctx.fillText(b.text, b.x + 2, b.y + b.h / 2);
+    }
+    labelInfo = {angle: best.angle * DEG, hits: best.hits, gap: gap(best.angle) * DEG, labels: best.list.length, outside: best.list.filter(b => !inside(b)).length};
     ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
     ctx.fillText(`orbital plane, x and y in M · view ±${view.toFixed(0)} M`, 8, h - 6);
   }
@@ -186,7 +222,7 @@ export function startOrbits(engine, textPx) {
       ? `Released at rest radially at r₀ with angular momentum L. Circular orbits need L ≥ √12 M ≈ 3.46 M; the one for L = ${fmt(L)} M is at ${s.circStable ? fmt(s.circStable) + ' M' : 'none'}.`
       : 'Light from 30 M with impact parameter b. Below 3√3 M ≈ 5.196 M it is captured.';
     drawOrbit(); drawPotential();
-    window.bhView = {snapshot: {...s, paused, trailPoints: trail.length, apsesDrawn: apses.length, preset, kindInput: kind, r0Input: r0, LInput: L}};
+    window.bhView = {snapshot: {...s, paused, trailPoints: trail.length, apsesDrawn: apses.length, labelInfo, preset, kindInput: kind, r0Input: r0, LInput: L}};
   }
   function frame(timestamp) {
     if (!last) last = timestamp;

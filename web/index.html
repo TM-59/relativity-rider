@@ -128,6 +128,42 @@
       </aside>
     </div>
   </section>
+  <section id="sky" class="orbits" aria-label="The view from the window">
+    <div class="orbit-intro"><p class="eyebrow">03 / THE VIEW FROM THE WINDOW</p><h2>Look out at near light speed.</h2>
+      <p>The ship moves at β = v / c past stars that are at rest. Light from each star reaches the moving ship from further ahead (aberration), shifted in frequency by the Doppler factor D, and the stars crowd toward the direction of motion: half of all of them sit inside a cone of half-angle arccos β. The same C, compiled to WebAssembly, computes every star's direction, D, black-body colour and visible-band brightness; JavaScript only draws the dots.</p></div>
+    <div class="layout orbit-layout">
+      <section class="panel" aria-label="The sky at rest and on board">
+        <div class="view-heading"><span><i class="live-dot" aria-hidden="true"></i> WHOLE SKY</span><span id="sky-status-head">centre: ahead · rim: behind</span></div>
+        <div class="orbit-view sky-wrap"><canvas id="sky-view" role="img" aria-label="Two discs showing the whole sky: on the left at rest, on the right from the moving ship. The centre of each disc is the direction of motion, the rim is straight behind, rings are every 30 degrees. Each dot is a catalogue star, coloured as a black body and sized by its visible-band brightness; the dashed yellow ring holds half of all stars."></canvas>
+          <div class="scene-label"><span id="sky-status" role="status">Loading…</span><small>Dots are computed star positions, not a picture</small></div></div>
+        <div class="legend" aria-label="Legend of the sky">
+          <span><i class="key ring30"></i> rings every 30° from the direction of motion</span>
+          <span><i class="key level"></i> half of all stars inside arccos β (dashed)</span>
+          <span>dot colour: black body at D·T · dot size: visible-band flux</span>
+        </div>
+        <canvas id="sky-curves" role="img" aria-label="Left: the angle on board against the angle at rest (yellow), with no change dashed. Right, on a log scale against the angle on board: the Doppler factor D (orange), the number of stars per solid angle D squared (pink) and the visible-band flux of a 5800 K star (dashed blue)."></canvas>
+        <div class="legend" aria-label="Legend of the curves">
+          <span><i class="key level"></i> θ′ against θ</span><span><i class="key world"></i> Doppler factor D</span><span><i class="key photon-solid"></i> stars per solid angle D²</span><span><i class="key newton"></i> visible flux of a 5800 K star</span>
+        </div>
+        <div class="telemetry bh-telemetry" aria-label="Sky readouts">
+          <div><span>LORENTZ γ</span><strong id="sky-gamma">—</strong></div>
+          <div><span>HALF OF THE STARS INSIDE</span><strong id="sky-cone">—</strong><small>°</small></div>
+          <div><span>STARS AHEAD · EXPECTED</span><strong id="sky-ahead">—</strong></div>
+          <div><span>D AHEAD · BEHIND</span><strong id="sky-doppler">—</strong></div>
+        </div>
+        <p class="bh-laps">A 5800 K star dead ahead looks like <b id="sky-sun">—</b> as bright in the visible band.</p>
+      </section>
+      <aside class="control-panel bh-controls" aria-label="Sky controls">
+        <p class="eyebrow">THE SHIP'S SPEED</p><h2>Speed up,<br>watch the sky move.</h2>
+        <label for="sky-beta"><span>Speed β = v / c</span><output id="sky-beta-out">0.90 c</output></label>
+        <input id="sky-beta" type="range" min="0" max="0.99" step="0.01" value="0.9">
+        <div class="bh-kind sky-presets" role="group" aria-label="Preset speeds"><button id="sky-05" type="button" aria-pressed="false">0.5 c</button><button id="sky-09" type="button" aria-pressed="true">0.9 c</button><button id="sky-099" type="button" aria-pressed="false">0.99 c</button></div>
+        <div class="experiment"><p class="eyebrow">OR WATCH</p>
+          <button id="sky-sweep" type="button">Sweep 0 → 0.99 c <span aria-hidden="true">→</span></button>
+          <p id="sky-note">Stars at rest; the ship moves to the right of the page, toward the centre of each disc.</p></div>
+      </aside>
+    </div>
+  </section>
   <section id="field-notes" class="field-notes"><p class="eyebrow">FIELD NOTES</p>
     <div><h2>Same distance, less time on board.</h2><p>At a constant 1 g the rocket reaches the half-way point at 0.95 c. The full flip-and-burn trip takes 3.53 years on Vela's clock and 5.82 years on Oren's. The worldline never leaves the light cone: nothing here goes faster than light.</p></div>
     <div><h3>The same model as the terminal game</h3><p>Each step advances the ship clock by 0.0044 yr with the exact closed form of hyperbolic motion (units c = 1, years and light-years), in C compiled to WebAssembly. JavaScript only draws and reads inputs. The paintings and the two foxes are illustrations; their markers sit on computed events.</p></div>
