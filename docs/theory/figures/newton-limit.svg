@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" font-family="sans-serif" font-size="12">
+<rect width="720" height="400" fill="#ffffff"/>
+<text x="70" y="26" font-size="16" font-weight="bold" fill="#222">Far from the hole the orbit becomes Newton's ellipse (apsides rp, 3 rp)</text>
+<line x1="70.0" y1="44" x2="70.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="344.0" x2="700" y2="344.0" stroke="#e3e3e3"/>
+<text x="70.0" y="362" text-anchor="middle" fill="#444">2.44e-05</text>
+<text x="62" y="348.0" text-anchor="end" fill="#444">-0.0543</text>
+<line x1="196.0" y1="44" x2="196.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="284.0" x2="700" y2="284.0" stroke="#e3e3e3"/>
+<text x="196.0" y="362" text-anchor="middle" fill="#444">0.01</text>
+<text x="62" y="288.0" text-anchor="end" fill="#444">0.185</text>
+<line x1="322.0" y1="44" x2="322.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="224.0" x2="700" y2="224.0" stroke="#e3e3e3"/>
+<text x="322.0" y="362" text-anchor="middle" fill="#444">0.02</text>
+<text x="62" y="228.0" text-anchor="end" fill="#444">0.424</text>
+<line x1="448.0" y1="44" x2="448.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="164.0" x2="700" y2="164.0" stroke="#e3e3e3"/>
+<text x="448.0" y="362" text-anchor="middle" fill="#444">0.03</text>
+<text x="62" y="168.0" text-anchor="end" fill="#444">0.663</text>
+<line x1="574.0" y1="44" x2="574.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="104.0" x2="700" y2="104.0" stroke="#e3e3e3"/>
+<text x="574.0" y="362" text-anchor="middle" fill="#444">0.04</text>
+<text x="62" y="108.0" text-anchor="end" fill="#444">0.903</text>
+<line x1="700.0" y1="44" x2="700.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="44.0" x2="700" y2="44.0" stroke="#e3e3e3"/>
+<text x="700.0" y="362" text-anchor="middle" fill="#444">0.05</text>
+<text x="62" y="48.0" text-anchor="end" fill="#444">1.14</text>
+<rect x="70" y="44" width="630" height="300" fill="none" stroke="#888"/>
+<text x="385" y="388" text-anchor="middle" fill="#222">M / rp</text>
+<text transform="translate(16 194) rotate(-90)" text-anchor="middle" fill="#222">ratio</text>
+<polyline fill="none" stroke="#e69f00" stroke-width="2" points="700.0,57.6 384.8,69.5 227.3,74.7 148.5,77.2 109.1,78.4 89.4,79.0 79.5,79.3 74.6,79.4 72.2,79.5 70.9,79.5 70.3,79.6 70.0,79.6 "/>
+<rect x="78" y="52" width="12" height="12" fill="#e69f00"/><text x="96" y="63" fill="#222">period/Kepler</text>
+<polyline fill="none" stroke="#0072b2" stroke-width="2" points="700.0,64.8 384.8,72.5 227.3,76.1 148.5,77.9 109.1,78.7 89.4,79.1 79.5,79.4 74.6,79.5 72.2,79.5 70.9,79.5 70.3,79.6 70.0,79.6 "/>
+<rect x="228" y="52" width="12" height="12" fill="#0072b2"/><text x="246" y="63" fill="#222">L/Newton L</text>
+<polyline fill="none" stroke="#d62728" stroke-width="2" points="700.0,300.7 384.8,316.8 227.3,323.9 148.5,327.2 109.1,328.8 89.4,329.6 79.5,330.0 74.6,330.2 72.2,330.3 70.9,330.3 70.3,330.4 70.0,330.4 "/>
+<rect x="378" y="52" width="12" height="12" fill="#d62728"/><text x="396" y="63" fill="#222">turn/2pi</text>
+</svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" font-family="sans-serif" font-size="12">
+<rect width="720" height="400" fill="#ffffff"/>
+<text x="70" y="26" font-size="16" font-weight="bold" fill="#222">Error of the periapsis angle after one orbit</text>
+<line x1="70.0" y1="44" x2="70.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="344.0" x2="700" y2="344.0" stroke="#e3e3e3"/>
+<text x="70.0" y="362" text-anchor="middle" fill="#444">-0.849</text>
+<text x="62" y="348.0" text-anchor="end" fill="#444">-10.4</text>
+<line x1="196.0" y1="44" x2="196.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="284.0" x2="700" y2="284.0" stroke="#e3e3e3"/>
+<text x="196.0" y="362" text-anchor="middle" fill="#444">-0.639</text>
+<text x="62" y="288.0" text-anchor="end" fill="#444">-9.17</text>
+<line x1="322.0" y1="44" x2="322.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="224.0" x2="700" y2="224.0" stroke="#e3e3e3"/>
+<text x="322.0" y="362" text-anchor="middle" fill="#444">-0.428</text>
+<text x="62" y="228.0" text-anchor="end" fill="#444">-7.93</text>
+<line x1="448.0" y1="44" x2="448.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="164.0" x2="700" y2="164.0" stroke="#e3e3e3"/>
+<text x="448.0" y="362" text-anchor="middle" fill="#444">-0.217</text>
+<text x="62" y="168.0" text-anchor="end" fill="#444">-6.68</text>
+<line x1="574.0" y1="44" x2="574.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="104.0" x2="700" y2="104.0" stroke="#e3e3e3"/>
+<text x="574.0" y="362" text-anchor="middle" fill="#444">-0.0066</text>
+<text x="62" y="108.0" text-anchor="end" fill="#444">-5.44</text>
+<line x1="700.0" y1="44" x2="700.0" y2="344" stroke="#e3e3e3"/>
+<line x1="70" y1="44.0" x2="700" y2="44.0" stroke="#e3e3e3"/>
+<text x="700.0" y="362" text-anchor="middle" fill="#444">0.204</text>
+<text x="62" y="48.0" text-anchor="end" fill="#444">-4.19</text>
+<rect x="70" y="44" width="630" height="300" fill="none" stroke="#888"/>
+<text x="385" y="388" text-anchor="middle" fill="#222">log10 step [M]</text>
+<text transform="translate(16 194) rotate(-90)" text-anchor="middle" fill="#222">log10 error [rad]</text>
+<polyline fill="none" stroke="#e69f00" stroke-width="2" points="700.0,127.3 610.0,156.3 520.0,185.3 430.0,214.3 340.0,243.3 250.0,272.3 160.0,301.3 70.0,330.4 "/>
+<rect x="78" y="52" width="12" height="12" fill="#e69f00"/><text x="96" y="63" fill="#222">fourth order</text>
+<polyline fill="none" stroke="#0072b2" stroke-width="2" points="700.0,57.6 610.0,72.2 520.0,86.7 430.0,101.2 340.0,115.8 250.0,130.3 160.0,144.8 70.0,159.3 "/>
+<rect x="228" y="52" width="12" height="12" fill="#0072b2"/><text x="246" y="63" fill="#222">leapfrog, same cost</text>
+</svg>

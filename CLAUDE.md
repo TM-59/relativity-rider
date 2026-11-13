@@ -14,11 +14,17 @@ C11 + libm の 1+1 次元特殊相対論シミュレータ。物理の正典は 
   Emscripten を有効にして `make web && node scripts/smoke.cjs` を手元で回す。
 - 理論の手引きは `docs/theory/`。`make theory-figs` が図と実測値の表を `tests/theory_figs.c` から再生成し、`make theory-check` が
   対応表(文 → 頁 → 図 → 関数 → テスト)の欠け・リンク切れ・消えた関数名・未掲載の公開関数で落ちる。法則・規則を足したら同じ PR で頁と図と表を足す。
-  README の「18 statements」は表の行数と合わせる。
+  README の「30 statements」は表の行数と合わせる。
 - スマホ(幅 720px 以下・高さ 500px 以下・タッチ主体)では DOM と canvas の全文字を 14 CSS px 以上、操作を 44 CSS px 以上にし、噴射ボタンは時空図の横に固定する。`make smoke` が 390×844 と 844×390 で実測する。`window.__tmGate` は読み取り専用。
 - CI は PR の軽量ゲート(docker build で `make test && make plots`)のみ。WASM ビルド・撮影・E2E はローカル専用。
 - 公開 repo。コミット・PR に生成 AI の署名、私的な情報を入れない(公開前に private 情報の検査と差分の目視を行う)。
 - 実画面は `docs/images/`(`make smoke` が撮る)、原画と生成指示・採否は `assets/art/` と `docs/art-direction.md`。
+
+## M2 のブラックホール軌道(一般相対論)
+
+- `src/schwarzschild.c` が Schwarzschild 時空の測地線(質点・光、比較用のニュートン)を幾何単位 G = c = M = 1 で積分する(Yoshida の 4 次シンプレクティック合成、地平面 2M(1 + 1e-3) で停止)。特殊相対論のモデル `src/relativity.c` とその出力・物語は変えない。
+- `src/orbit.c` がブラウザーの「Orbit a black hole」と端末の `--orbit`(docs/orbit.svg)の adapter。JS(`web/orbits.mjs`)は描画と入力だけ。
+- `tests/test_schwarzschild.c` が閉形式(円軌道・ISCO 6M・光子球 3M・b_c・楕円積分の近日点移動・4M/b・自由落下)と収束次数を照合し、`--trace` を smoke が WASM と比べる。理論は `docs/theory/05-schwarzschild.md`(S19–S30)。
 
 ## M5 の物語の層「The Long Echo」
 

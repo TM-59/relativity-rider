@@ -54,6 +54,85 @@ async function compareWasm() {
   return {rows: row, columns: rows[0].length - 2, maxError, tolerance: 1e-9};
 }
 
+// The black-hole panel (src/orbit.c): the same scripted runs as `./test_schwarzschild --trace`.
+const ORBIT_RUNS = [[0, 20, 4.2], [0, 7, 3.5], [0, 40, 3.2], [1, 0, 6], [1, 0, 5.2]];
+async function compareOrbits() {
+  const createRider = (await import(pathToFileURL(path.resolve('dist/physics.mjs')).href)).default;
+  const engine = await createRider({wasmBinary: fs.readFileSync('dist/physics.wasm')});
+  const lines = fs.readFileSync('build/orbit-trace.csv', 'utf8').trim().split('\n');
+  const rows = lines.slice(1).map(line => line.split(',').map(Number)), fields = lines[0].split(',').filter(c => /^f\d+$/.test(c)).length;
+  let row = 0, maxError = 0;
+  ORBIT_RUNS.forEach(([kind, r0, L], run) => {
+    engine._so_reset(kind, r0, L);
+    for (let step = 0; step <= 3000; step += 300) {
+      const native = rows[row++];
+      assert.equal(native[0], run); assert.equal(native[1], step);
+      const n = engine._so_value(37), a = engine._so_value(18);
+      const values = [...Array(fields).keys()].map(f => engine._so_value(f)).concat([engine._so_trail_x(n - 1), engine._so_trail_y(n - 1),
+        engine._so_ntrail_x(n - 1), engine._so_ntrail_y(n - 1), engine._so_curve(step % 240), engine._so_ncurve(step % 240), engine._so_apsis(a > 0 ? a - 1 : 0)]);
+      values.forEach((value, i) => {
+        const error = Math.abs(value - native[i + 2]) / Math.max(1, Math.abs(native[i + 2]));
+        maxError = Math.max(maxError, error);
+        assert.ok(Number.isFinite(error) && error < 1e-9, `orbit WASM/native run=${run} step=${step} column=${i}: ${error}`);
+      });
+      engine._so_step(300);
+    }
+  });
+  check(row === rows.length, 'all native orbit samples checked');
+  return {rows: row, columns: rows[0].length - 2, maxError, tolerance: 1e-9};
+}
+
+async function blackHole(page) {
+  const bh = () => page.evaluate(() => window.bhView.snapshot);
+  const setRange = (id, value) => page.locator(id).evaluate((el, v) => { el.value = String(v); el.dispatchEvent(new Event('input', {bubbles: true})); }, value);
+  await page.locator('#black-hole').scrollIntoViewIfNeeded();
+  let b = await bh();
+  check(b.kind === 0 && b.r0 === 20 && Math.abs(b.L - 4.2) < 1e-12 && b.paused && b.steps === 0, 'black hole: default start read from C');
+  check(b.bound === 0 && Math.abs(b.ra - 20) < 1e-9 && b.rp > 10.3 && b.rp < 10.4, `bound orbit between ${b.rp} and ${b.ra} M`);
+  check(b.isco === 6 && b.photon === 3 && Math.abs(b.bcrit - 3 * Math.sqrt(3)) < 1e-12, 'ISCO, photon sphere and b_c from C');
+  await page.locator('#bh-launch').click();
+  await page.clock.runFor(30000);
+  b = await bh();
+  check(!b.paused && b.state === 0 && b.apses >= 6, `the orbit runs (${b.apses} periapses)`);
+  check(Math.abs(b.prec - b.precExact) < 1e-6 && b.prec > 2 && b.prec < 2.3, `turn per lap ${b.prec} vs elliptic integral ${b.precExact}`);
+  check(b.precWeak < b.precExact, 'the weak-field formula is short in the strong field');
+  check(b.trailPoints > 1000 && b.drift < 1e-10 && b.apsesDrawn === b.apses, `trail ${b.trailPoints} points, energy error ${b.drift}`);
+  check(b.nbound === 0 && Math.abs(b.nra - 20) < 1e-9, "Newton's orbit from the same start");
+  check(b.clockRate < b.staticRate && b.staticRate < 1, 'the orbiting clock runs slower than a static one');
+  const rosette = {apses: b.apses, precession: b.prec, precExact: b.precExact, precWeak: b.precWeak, drift: b.drift, trailPoints: b.trailPoints};
+  await page.locator('#bh-freeze').click(); const frozen = await bh(); await page.clock.runFor(1000);
+  check(frozen.paused && (await bh()).steps === frozen.steps, 'Freeze stops the C integration');
+  await page.locator('#black-hole').evaluate(el => el.scrollIntoView({block: 'start'}));
+  await page.screenshot({path: 'docs/images/black-hole.jpg', type: 'jpeg', quality: 86});
+  // Too little angular momentum: falls in, while Newton's orbit with the same L does not.
+  await setRange('#bh-l', 3.3);
+  b = await bh();
+  check(Math.abs(b.L - 3.3) < 1e-12 && b.bound === 2 && b.preset === null, 'the L slider reaches C: L = 3.3 has no turning point');
+  await page.locator('#bh-launch').click(); await page.clock.runFor(20000); b = await bh();
+  check(b.state === 1 && b.nstate === 0, 'captured by the hole; the Newtonian twin keeps orbiting');
+  await setRange('#bh-r0', 12); b = await bh();
+  check(b.r0 === 12 && b.steps === 0, 'the r0 slider reaches C');
+  // Light grazing the photon sphere: winds round and escapes, bent by more than a full turn.
+  await page.locator('#bh-graze').click(); await page.clock.runFor(15000); b = await bh();
+  check(b.kind === 1 && Math.abs(b.L - 5.21) < 1e-12 && b.state === 2, `grazing light escapes (state ${b.state})`);
+  check(Math.abs(b.deflect - b.deflectInner) < 1e-3 && b.deflect > Math.PI, `bent by ${b.deflect} rad (quadrature ${b.deflectInner})`);
+  const graze = {b: b.L, deflect: b.deflect, deflectInner: b.deflectInner, deflectTotal: b.deflectTotal};
+  check(await page.locator('#bh-r0').isDisabled() && (await page.locator('#bh-l-name').textContent()) === 'Impact parameter b', 'light mode relabels the slider');
+  await page.locator('#black-hole').evaluate(el => el.scrollIntoView({block: 'start'}));
+  await page.screenshot({path: 'docs/images/black-hole-light.jpg', type: 'jpeg', quality: 86});
+  await page.locator('#bh-capture').click(); await page.clock.runFor(10000); b = await bh();
+  check(b.state === 1 && b.nstate !== 1, 'light with b = 5 is captured; the straight line is not');
+  await page.locator('#bh-isco').click(); await page.clock.runFor(5000); b = await bh();
+  check(b.kind === 0 && Math.abs(b.rp - 7) < 1e-6 && Math.abs(b.ra - 7) < 1e-6 && Math.abs(b.r - 7) < 1e-6, `circular orbit at 7 M stays (r ${b.r})`);
+  await page.locator('#bh-rosette').click(); await page.clock.runFor(8000);
+  for (const width of [1440, 1024]) {
+    await page.setViewportSize({width, height: 1050}); await page.clock.runFor(100);
+    check(await page.locator('body').evaluate(el => el.scrollWidth <= innerWidth), `${width}px with the black-hole panel has no horizontal overflow`);
+  }
+  await page.setViewportSize({width: 1440, height: 1050});
+  return {rosette, grazingLight: graze};
+}
+
 /* A pilot at the keyboard: hold W toward the marker until Oren calls "turn now" (or, without his call, until the brake
  * distance readout reaches the distance left), then hold S until the rocket stops; repeat from there. On a hold it waits. */
 async function flyStory(page, choices, shoot) {
@@ -111,7 +190,7 @@ async function flyStory(page, choices, shoot) {
 }
 
 async function run() {
-  const started = performance.now(), equivalence = await compareWasm();
+  const started = performance.now(), equivalence = await compareWasm(), orbitEquivalence = await compareOrbits();
   fs.mkdirSync('docs/images', {recursive: true});
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const origin = `http://127.0.0.1:${server.address().port}`;
@@ -179,6 +258,7 @@ async function run() {
   check(await page.locator('body').evaluate(el => el.scrollWidth <= innerWidth), 'desktop has no horizontal overflow');
   await page.getByRole('link', {name: 'How it works'}).click();
   check(page.url().endsWith('#field-notes'), 'field notes link');
+  const blackHoleResult = await blackHole(page);
 
   // A hand-flown trip with the real buttons can also stop on the star.
   const hand = await context.newPage(); track(hand); await ready(hand, origin + '/');
@@ -261,12 +341,23 @@ async function run() {
   const pinned = await mobile.locator('#accel').boundingBox();
   check(pinned.y + pinned.height <= 844 && thrustBox.width >= 150 && sceneBox.width > 300, 'engine buttons stay on screen beside the diagram');
   await mobile.evaluate(() => scrollTo(0, 0)); await capture(mobile, 'mobile');
+  // The black-hole panel on the phone: sliders and buttons 44 px, the orbit drawn, a screenshot.
+  await mobile.locator('#bh-launch').scrollIntoViewIfNeeded(); await mobile.locator('#bh-launch').tap(); await mobile.clock.runFor(8000);
+  check((await mobile.evaluate(() => window.bhView.snapshot)).apses >= 2, 'black hole runs from a tap');
+  for (const id of ['#bh-r0', '#bh-l', '#bh-launch', '#bh-particle', '#bh-light']) {
+    const rect = await mobile.locator(id).boundingBox(); check(rect.height >= 44 && rect.width >= 44, `390x844 ${id} is at least 44 px (${rect.width}x${rect.height})`);
+  }
+  await mobile.locator('#black-hole').evaluate(el => el.scrollIntoView({block: 'start'}));
+  await mobile.screenshot({path: 'docs/images/black-hole-mobile.jpg', type: 'jpeg', quality: 86});
   await mobile.setViewportSize({width: 844, height: 390}); await mobile.clock.runFor(100);
   size = await mobile.evaluate(sizes);
   check(size.dom >= 14 && size.canvas >= 14, `844x390: smallest text DOM ${size.dom}px (${size.where}), canvas ${size.canvas}px`);
+  for (const id of ['#bh-r0', '#bh-l']) {
+    const rect = await mobile.locator(id).boundingBox(); check(rect.height >= 44, `844x390 ${id} is at least 44 px high`);
+  }
   check(await mobile.locator('body').evaluate(el => el.scrollWidth <= innerWidth), '844x390 has no overflow');
   for (const el of await mobile.locator('button').all()) {
-    const rect = await el.boundingBox(); check(rect.width >= 44 && rect.height >= 44, 'landscape buttons have 44px touch target');
+    const rect = await el.boundingBox(); check(rect.width >= 44 && rect.height >= 44, `landscape buttons have 44px touch target (${await el.getAttribute('id')} ${rect.width}x${rect.height})`);
   }
   // A story scene on the phone: text at least 14 px, answers at least 44 px, in both orientations.
   await mobile.setViewportSize({width: 390, height: 844}); await mobile.clock.runFor(100);
@@ -300,7 +391,7 @@ async function run() {
   await broken.close();
   check(normalErrors.length === 0, `console/page errors ${normalErrors.join(';')}`);
   check(external.length === 0, 'no external requests');
-  const result = {checks, seconds: (performance.now() - started) / 1000, equivalence, errors: normalErrors.length, externalRequests: external.length,
+  const result = {checks, seconds: (performance.now() - started) / 1000, equivalence, orbitEquivalence, blackHole: blackHoleResult, errors: normalErrors.length, externalRequests: external.length,
     handTrip, story, demo: {x: demo.x, v: demo.v, tau: demo.tau, t: demo.t, gap: demo.gap, maxV: demo.maxV},
     screenshots: fs.readdirSync('docs/images').filter(file => file.endsWith('.jpg')).sort()};
   fs.writeFileSync('docs/validation.json', JSON.stringify(result, null, 2) + '\n'); console.log(JSON.stringify(result, null, 2));

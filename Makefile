@@ -1,10 +1,13 @@
 CC      ?= cc
 CFLAGS  ?= -std=c11 -O2 -Wall -Wextra -Wpedantic -Werror
 LDLIBS  += -lm
-SRC     := src/relativity.c src/svg.c src/render.c src/gif.c
+SRC     := src/relativity.c src/svg.c src/render.c src/gif.c src/schwarzschild.c src/orbit.c
 EMCC    ?= emcc
 PYTHON  ?= python3
 PORT    ?= 4217
+
+GEO     := src/schwarzschild.c src/orbit.c
+GEO_H   := src/schwarzschild.h src/orbit.h
 
 .PHONY: all test bench story story-check web play smoke plots clean theory-figs theory-check
 all: relativity-rider
@@ -21,6 +24,9 @@ test_gif: src/gif.c tests/test_gif.c
 test_rider: src/relativity.c src/rider.c tests/test_rider.c src/relativity.h src/rider.h
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LDLIBS)
 
+test_schwarzschild: src/relativity.c $(GEO) tests/test_schwarzschild.c src/relativity.h $(GEO_H)
+	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LDLIBS)
+
 COURIER   := src/relativity.c src/courier.c
 COURIER_H := src/relativity.h src/courier.h tests/courier_policy.h tests/courier_run.h
 
@@ -31,10 +37,11 @@ story_bench: $(COURIER) tests/story_bench.c $(COURIER_H)
 	$(CC) $(CFLAGS) -o $@ $(COURIER) tests/story_bench.c $(LDLIBS)
 
 # The story rows are compared byte for byte; the CI runs them with the Debian 13 toolchain of the Dockerfile.
-test: test_relativity test_gif test_rider test_courier story_bench
+test: test_relativity test_gif test_rider test_schwarzschild test_courier story_bench
 	./test_relativity
 	./test_gif
 	./test_rider
+	./test_schwarzschild
 	./test_courier
 	./story_bench --check docs/narrative
 
@@ -52,23 +59,24 @@ story-check: story_bench
 	cmp .story-check/tension.json docs/narrative/tension.json
 	rm -rf .story-check
 
-bench: test_rider
+bench: test_rider test_schwarzschild
 	./test_rider
 	@mkdir -p build
 	./test_rider --trace > build/native-trace.csv
+	./test_schwarzschild --trace > build/orbit-trace.csv
 
 # Browser observatory: the same C model compiled to WebAssembly (local only, needs emsdk).
 web: dist/physics.mjs
-	cp web/index.html web/style.css web/app.mjs web/story.mjs dist/
+	cp web/index.html web/style.css web/app.mjs web/story.mjs web/orbits.mjs dist/
 	mkdir -p dist/art
 	cp assets/art/* dist/art/
 	$(PYTHON) scripts/check-size.py
 
-dist/physics.mjs: src/relativity.c src/rider.c src/relativity.h src/rider.h src/courier.c src/courier.h src/courier_web.c
+dist/physics.mjs: src/relativity.c src/rider.c src/relativity.h src/rider.h src/courier.c src/courier.h src/courier_web.c $(GEO) $(GEO_H)
 	mkdir -p dist
-	$(EMCC) $(CFLAGS) src/relativity.c src/rider.c src/courier.c src/courier_web.c -lm --no-entry -o $@ \
+	$(EMCC) $(CFLAGS) src/relativity.c src/rider.c src/courier.c src/courier_web.c $(GEO) -lm --no-entry -o $@ \
 	  -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,node -sFILESYSTEM=0 \
-	  -sEXPORTED_FUNCTIONS=_rr_reset,_rr_thrust,_rr_step,_rr_value,_rr_trail_t,_rr_trail_x,_cw_reset,_cw_tick,_cw_answer,_cw_value
+	  -sEXPORTED_FUNCTIONS=_rr_reset,_rr_thrust,_rr_step,_rr_value,_rr_trail_t,_rr_trail_x,_cw_reset,_cw_tick,_cw_answer,_cw_value,_so_reset,_so_step,_so_value,_so_trail_x,_so_trail_y,_so_ntrail_x,_so_ntrail_y,_so_apsis,_so_curve,_so_ncurve
 
 play: web
 	$(PYTHON) -m http.server $(PORT) --bind 127.0.0.1 --directory dist
@@ -81,10 +89,11 @@ plots: relativity-rider
 	mkdir -p docs
 	./relativity-rider --headless docs
 	./relativity-rider --gif docs/demo.gif
+	./relativity-rider --orbit docs
 	head -c6 docs/demo.gif | grep -q GIF89a
 
 # Regenerates the plotted figures and the measured-values table of docs/theory (one command).
-theory_figs: src/relativity.c src/rider.c src/svg.c tests/theory_figs.c src/relativity.h src/rider.h src/svg.h
+theory_figs: src/relativity.c src/rider.c src/svg.c $(GEO) tests/theory_figs.c src/relativity.h src/rider.h src/svg.h $(GEO_H)
 	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) $(LDLIBS)
 
 theory-figs: theory_figs
@@ -96,5 +105,5 @@ theory-check:
 	$(PYTHON) scripts/theory-check.py
 
 clean:
-	rm -f relativity-rider test_relativity test_gif test_rider test_courier story_bench theory_figs
+	rm -f relativity-rider test_relativity test_gif test_rider test_schwarzschild test_courier story_bench theory_figs
 	rm -rf build dist
