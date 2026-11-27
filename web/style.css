@@ -151,3 +151,5 @@ body{font-size:16px}
 .sky-presets{grid-template-columns:repeat(3,1fr);margin-top:12px}
 .sky-presets button{padding:10px 6px}
 @media(max-width:720px){#sky-view{aspect-ratio:0.52}#sky-curves{aspect-ratio:0.9}}
+/* Phones: the ♪ button shares the top bar, so the decorative arrow of "How it works" goes and the gaps narrow. */
+@media(max-width:720px){.about-link span{display:none}.top-actions{gap:6px}.lang{padding:8px 5px}}
