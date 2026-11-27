@@ -29,7 +29,8 @@ export function startOrbits(engine, textPx) {
   const note = (name, px) => { texts = texts.filter(row => row.text !== name).concat({text: name, px}); };
   function canvasSize(canvas) {
     const bounds = canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
-    const w = Math.round(bounds.width * dpr), h = Math.round(bounds.height * dpr);
+    // Floor, not round: a backing store larger than the box would shrink every drawn text below its CSS px.
+    const w = Math.floor(bounds.width * dpr), h = Math.floor(bounds.height * dpr);
     if (w && h && (canvas.width !== w || canvas.height !== h)) { canvas.width = w; canvas.height = h; }
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return {ctx, w: bounds.width, h: bounds.height};
