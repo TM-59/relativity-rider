@@ -77,6 +77,7 @@ body{font-size:16px}
 .eyebrow,.clockcard span,.telemetry span,.view-heading,.experiment .eyebrow,footer{letter-spacing:.4px}
 .scene-label small{display:block}
 .topbar>.eyebrow{display:none}
+.brand{min-height:44px}
 .about-link,.secondary-actions button,.experiment button{min-height:44px;display:inline-flex;align-items:center}
 .experiment button{display:flex}
 .thrust{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:8px 0;box-shadow:0 -10px 18px var(--bg);grid-template-columns:1fr 1fr}
@@ -152,4 +153,4 @@ body{font-size:16px}
 .sky-presets button{padding:10px 6px}
 @media(max-width:720px){#sky-view{aspect-ratio:0.52}#sky-curves{aspect-ratio:0.9}}
 /* Phones: the ♪ button shares the top bar, so the decorative arrow of "How it works" goes and the gaps narrow. */
-@media(max-width:720px){.about-link span{display:none}.top-actions{gap:6px}.lang{padding:8px 5px}}
+@media(max-width:720px){.about-link span{display:none}.about-link{min-width:44px}.top-actions{gap:6px}.lang{padding:8px 5px}}
