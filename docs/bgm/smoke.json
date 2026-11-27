@@ -1,0 +1,80 @@
+{
+ "checks": [
+  {
+   "what": "nothing fetched before the first press",
+   "fetched": 0
+  },
+  {
+   "what": "drift plays",
+   "cue": {
+    "track": "drift",
+    "gain": 1
+   },
+   "level": -21.1,
+   "gain": 0.45
+  },
+  {
+   "what": "story plays",
+   "cue": {
+    "track": "story",
+    "gain": 0.7
+   },
+   "level": -30.3,
+   "gain": 0.315
+  },
+  {
+   "what": "mute during a crossfade silences the fading track too",
+   "level": -120
+  },
+  {
+   "what": "leg plays",
+   "cue": {
+    "track": "leg",
+    "gain": 1
+   },
+   "level": -24.8,
+   "gain": 0.45
+  },
+  {
+   "what": "pause ducks",
+   "gain": [
+    0.45,
+    0.18000000000000002
+   ],
+   "level": [
+    -24.8,
+    -34.5
+   ]
+  },
+  {
+   "what": "♪ mutes and restores",
+   "size": {
+    "x": 1188,
+    "y": -480.5,
+    "width": 44,
+    "height": 44
+   },
+   "level": [
+    -120,
+    -34.6
+   ]
+  },
+  {
+   "what": "cues: heavy scenes story 0.4x, Home and after it home, flight and experiments drift"
+  },
+  {
+   "what": "dist bytes",
+   "bytes": 2646775
+  }
+ ],
+ "fetched": [
+  "list.json",
+  "drift.ogg",
+  "leg.ogg",
+  "story.ogg",
+  "home.ogg"
+ ],
+ "ok": true,
+ "seconds": 21.1,
+ "when": "2026-11-27T01:08:11.355Z"
+}

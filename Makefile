@@ -75,7 +75,9 @@ bench: test_rider test_schwarzschild test_aberration
 
 # Browser observatory: the same C model compiled to WebAssembly (local only, needs emsdk).
 web: dist/physics.mjs
-	cp web/index.html web/style.css web/app.mjs web/story.mjs web/orbits.mjs web/sky.mjs dist/
+	cp web/index.html web/style.css web/app.mjs web/story.mjs web/orbits.mjs web/sky.mjs web/bgm.mjs dist/
+	mkdir -p dist/bgm
+	cp web/bgm/* dist/bgm/
 	mkdir -p dist/art
 	cp assets/art/* dist/art/
 	$(PYTHON) scripts/check-size.py

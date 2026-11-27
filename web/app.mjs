@@ -2,6 +2,7 @@ import createRider from './physics.mjs';
 import {SCENES, UI, NAMES} from './story.mjs';
 import {startOrbits} from './orbits.mjs';
 import {startSky} from './sky.mjs';
+import {BgmPlayer, cue} from './bgm.mjs';
 
 const $ = id => document.getElementById(id);
 const names = ['tau','t','x','v','gamma','phi','thrust','mode','steps','dest','arrived','halfTau','dtau','trail','done','gap','maxV'];
@@ -360,8 +361,34 @@ function frame(timestamp) {
     }
     if (moved) { pull(); if (state.done) { paused = true; held = 0; } render(); }
   }
+  musicFrame();
   requestAnimationFrame(frame);
 }
+// Music (docs/bgm.md): the ballad on manual flight, the demonstration, the black hole and the window view,
+// a pulse track while flying a leg of The Long Echo, quiet music under a scene and its own track at Home.
+// Nothing loads before the first press. M or the ♪ button toggles the music; mute also cuts the output.
+const music = new BgmPlayer(), muteButton = $('mute');
+let muted = false;
+function setMuted(value) {
+  muted = value;
+  muteButton.setAttribute('aria-pressed', String(muted));
+  muteButton.setAttribute('aria-label', muted ? 'Play music' : 'Mute music');
+  muteButton.title = muted ? 'Music off · M plays' : 'Music on · M mutes';
+}
+muteButton.onclick = () => setMuted(!muted);
+window.addEventListener('pointerdown', () => music.unlock(), true);
+window.addEventListener('keydown', event => {
+  music.unlock();
+  if (event.key.toLowerCase() === 'm' && !event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey
+    && !(event.target instanceof Element && event.target.matches('input,textarea,select'))) setMuted(!muted);
+}, true);
+const musicCue = () => {
+  const s = engine && story && cs && cs.scene >= 0 ? SCENES[cs.scene] : null;
+  return cue({story, scene: s ? s.id : null, heavy: Boolean(s?.heavy), ending: Boolean(s?.endings), paused,
+    over: Boolean(story && cs && cs.leg >= 5)});
+};
+function musicFrame() { music.set(musicCue(), muted); }
+Object.defineProperty(window, 'musicView', {get: () => ({cue: musicCue(), ...music.state()})});
 // Read-only hook for the phone playability check: sizes in CSS px of the scene canvas, the first goal, the next tap.
 let burned = false, orbits = null, skyPanel = null;
 const fromScene = el => { const c = scene.getBoundingClientRect(), r = el.getBoundingClientRect(); return {x: r.left + r.width / 2 - c.left, y: r.top + r.height / 2 - c.top, hold: true}; };
