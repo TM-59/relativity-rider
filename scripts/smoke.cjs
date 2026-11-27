@@ -374,6 +374,7 @@ async function run() {
   for (const el of await mobile.locator('button').all()) {
     const rect = await el.boundingBox(); check(rect.width >= 44 && rect.height >= 44, 'buttons have 44px touch target');
   }
+  const brand = await mobile.locator('a.brand').boundingBox(); check(brand && brand.height >= 44, `390x844: title link is ${brand?.height}px tall`);
   // Phone legibility: every visible text at least 14 CSS px (DOM and canvas), in portrait and landscape.
   const sizes = () => {
     const out = {dom: 99, where: '', canvas: 99, gate: Boolean(window.__tmGate)};
@@ -385,7 +386,11 @@ async function run() {
       const px = parseFloat(style.fontSize);
       if (px < out.dom) { out.dom = px; out.where = el.className || el.id || el.tagName; }
     }
-    for (const row of window.__tmGate.texts()) out.canvas = Math.min(out.canvas, row.px);
+    // The hook reports CSS px; a backing store taller than dpr x box shrinks every glyph, so scale by the smallest ratio.
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    let ratio = 1;
+    for (const c of document.querySelectorAll('canvas')) { const b = c.getBoundingClientRect(); if (b.height && c.height) ratio = Math.min(ratio, dpr * b.height / c.height); }
+    for (const row of window.__tmGate.texts()) out.canvas = Math.min(out.canvas, row.px * ratio);
     return out;
   };
   let size = await mobile.evaluate(sizes);
@@ -425,6 +430,7 @@ async function run() {
   for (const el of await mobile.locator('button').all()) {
     const rect = await el.boundingBox(); check(rect.width >= 44 && rect.height >= 44, `landscape buttons have 44px touch target (${await el.getAttribute('id')} ${rect.width}x${rect.height})`);
   }
+  const brandWide = await mobile.locator('a.brand').boundingBox(); check(brandWide && brandWide.height >= 44, `844x390: title link is ${brandWide?.height}px tall`);
   // A story scene on the phone: text at least 14 px, answers at least 44 px, in both orientations.
   await mobile.setViewportSize({width: 390, height: 844}); await mobile.clock.runFor(100);
   await mobile.locator('#story').scrollIntoViewIfNeeded(); await mobile.locator('#story').tap();
