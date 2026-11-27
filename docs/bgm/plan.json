@@ -1,0 +1,73 @@
+{
+ "note": "BGM の生成計画(relativity-rider M63 #25、親 project-context#598)。caption は音の特徴だけ(曲名・作者・作品名を書かない。musical-notation-translator の docs/copyright-policy.md)。どの場面も文字か計器を読むので全部器楽。soft の曲のループは bars × 4 × 60 / bpm ≥ 16 秒(drift 31.0・story 25.7・home 24.0 秒)。候補は Colab の GPU で作る(local-llm-ops #260、python -m tools.colab bgm)、落ちる先は scripts/bgm_gen.py(手元の CPU)。scripts/bgm_bake.py が門・ループの切り出し・書き出し(web/bgm/)。",
+ "engine": "ACE-Step/Ace-Step1.5:acestep-v15-turbo",
+ "steps": 8,
+ "note_loop": "ループは生成の長さより十分短く取り、継ぎ目の始点を探す余地を残す。soft の曲は継ぎ目を 2 秒重ね、長さを 1 小節ずつ縮めて 16 秒以上で継ぎ目の音色の跳びが最小の物を採る。pulse は 0.12 秒(拍がずれない)。",
+ "seeds": [
+  941,
+  942,
+  943,
+  944,
+  945,
+  946
+ ],
+ "note_seeds": "seed は 1 場面 6 本。pulse の場面は caption 3 つ(頭から拍が続く指示。gravity-well #35 で前半が薄い候補が出た学び)。他の作品と同じ caption・seed を使わない(既存の plan.json の seed 11〜936 と別の 941〜946)。",
+ "scenes": {
+  "drift": {
+   "role": "基調(時空図の手動飛行・1 g の実演・ブラックホールの軌道・窓からの眺め)",
+   "loop": true,
+   "bpm": 62,
+   "key": "F major",
+   "seconds": 44,
+   "bars": 8,
+   "mood": "soft",
+   "xf": 2.0,
+   "captions": [
+    "slow luminous ballad, soft grand piano melody, slow shimmering choir-like synth pad, distant bell tones, a rocket drifting between stars as clocks slow down, wondering and serene, no drums, instrumental",
+    "tender interstellar ballad, warm french horn melody over soft analog strings and slow harp, light bending around a quiet star, calm and vast, no percussion, instrumental"
+   ]
+  },
+  "leg": {
+   "role": "戦闘の役(The Long Echo の往復の区間を噴射と制動で飛ぶ間)",
+   "loop": true,
+   "bpm": 116,
+   "key": "D minor",
+   "seconds": 44,
+   "bars": 16,
+   "mood": "pulse",
+   "captions": [
+    "driving relativistic flight track, steady kick drum on every beat from the first bar, pulsing sixteenth-note synth bass, fast string ostinato, bright brass hits, burning at one g toward a far station, tense and bold, no intro, instrumental",
+    "propulsive courier music, tight electronic snare and kick on every beat throughout, rolling floor toms, staccato cellos, soaring synth lead, racing the light delay home, determined, constant energy from start to end, instrumental",
+    "relentless deep space run, full drum kit from the very first bar, driving eighth-note bass, urgent strings and low brass all the way through, no quiet sections, no breakdown, instrumental"
+   ]
+  },
+  "story": {
+   "role": "物語(The Long Echo の場面。重い場面 dust・star・silence と一時停止は 0.4 倍)",
+   "loop": true,
+   "bpm": 56,
+   "key": "F major",
+   "seconds": 40,
+   "bars": 6,
+   "mood": "soft",
+   "xf": 2.0,
+   "captions": [
+    "sparse radio-dish underscore, soft celesta and distant electric piano notes, low sustained string drone, long pauses, a message arriving years late, quiet and tender, no drums, instrumental",
+    "minimal cold score, slow bowed double bass drone with single vibraphone notes, wide near silence, waiting for an echo across light years, no percussion, instrumental"
+   ]
+  },
+  "home": {
+   "role": "結末(Home の場面)",
+   "loop": true,
+   "bpm": 60,
+   "key": "B-flat major",
+   "seconds": 40,
+   "bars": 6,
+   "mood": "soft",
+   "xf": 2.0,
+   "captions": [
+    "gentle homecoming ballad, warm piano and solo cello melody, slow swelling strings, landing back on earth where years have passed, relieved and bittersweet, no drums, instrumental",
+    "slow closing ballad, soft acoustic guitar and string quartet with a quiet flute, two clocks finally together again, tender and calm, no percussion, instrumental"
+   ]
+  }
+ }
+}
